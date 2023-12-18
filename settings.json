@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    {
+      "name": "SMapp",
+      "host": "localhost",
+      "port": 9092,
+      "adminPort": 9093
+    }
+  ],
+  "appTitle": "WPF Status",
+  "isTimerEnabled": true
+}
