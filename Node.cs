@@ -110,10 +110,10 @@ namespace WpfStatus
                 OnPropertyChanged(nameof(Rewards));
                 OnPropertyChanged(nameof(TimeToNextReward));
                 IsUpdateEvents = false;
-
-                PeerInfos = await GetPeerInfoStream();
-                OnPropertyChanged(nameof(PeerInfo));
             }
+
+            PeerInfos = await GetPeerInfoStream();
+            OnPropertyChanged(nameof(PeerInfo));
         }
 
         protected virtual void OnPropertyChanged(string propertyName)

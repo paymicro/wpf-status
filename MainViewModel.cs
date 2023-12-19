@@ -4,11 +4,12 @@ using WpfStatus.api;
 
 namespace WpfStatus
 {
-    public class MainViewModel: INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged
     {
         private int _progressValue;
 
-        public MainViewModel(AppSettings appSettings) {
+        public MainViewModel(AppSettings appSettings)
+        {
             foreach (var node in appSettings.Nodes)
             {
                 Nodes.Add(new Node
@@ -41,11 +42,56 @@ namespace WpfStatus
 
         public ObservableCollection<PeerInfo> PeerInfos { get; set; } = [];
 
+        public ObservableCollection<Event> Events { get; set; } = [];
+
+        private Node? _selectedNode;
+
+        public Node? SelectedNode
+        {
+            get => _selectedNode;
+            set
+            {
+                if (value != null)
+                {
+                    UpdatePeerInfosFrom(value);
+                }
+                OnPropertyChanged(nameof(SelectedNode));
+            }
+        }
+
+        public async Task UpdateAllNodes()
+        {
+            foreach (var node in Nodes)
+            {
+                await node.Update();
+            }
+
+            if (_selectedNode != null)
+            {
+                UpdatePeerInfosFrom(_selectedNode);
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void UpdatePeerInfosFrom(Node node)
+        {
+            PeerInfos.Clear();
+            foreach (var item in node.PeerInfos)
+            {
+                PeerInfos.Add(item);
+            }
+
+            Events.Clear();
+            foreach (var item in node.Events)
+            {
+                Events.Add(item);
+            }
         }
     }
 }

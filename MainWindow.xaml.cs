@@ -1,10 +1,8 @@
 ﻿using MahApps.Metro.Controls;
-using WpfStatus.api;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Collections.ObjectModel;
 
 namespace WpfStatus
 {
@@ -51,6 +49,7 @@ namespace WpfStatus
                 button.IsEnabled = false;
                 node.IsUpdateEvents = true;
                 await node.Update();
+                model.SelectedNode = node;
                 button.IsEnabled = true;
             }
             else
@@ -61,10 +60,7 @@ namespace WpfStatus
 
         private async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var node in model.Nodes)
-            {
-                await node.Update();
-            }
+            await model.UpdateAllNodes();
         }
 
         private void AutoUpdate_Checked(object sender, RoutedEventArgs e)
@@ -88,26 +84,8 @@ namespace WpfStatus
         private void List_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems[0] is Node node) {
-                EventsText.Text = string.Join(Environment.NewLine, node.Events.Select(EventToString));
-
-                model.PeerInfos.Clear();
-                foreach (var item in node.PeerInfos)
-                {
-                    model.PeerInfos.Add(item);
-                }
+                model.SelectedNode = node;
             }
-        }
-
-        private string EventToString(Event e)
-        {
-            var date = DateTime.Parse(e.Timestamp).ToString("G");
-            var result = date + "\t" + e.Help;
-            if (e.Eligibilities != null)
-            {
-                var eli = string.Join("  ", e.Eligibilities.Eligibilities.Select(el => el.Layer.ToString()));
-                result += Environment.NewLine + "Eligibilities: " + eli + Environment.NewLine;
-            }
-            return result;
         }
 
         private void GridViewColumnHeaderClickedHandler(object sender,
@@ -169,7 +147,7 @@ namespace WpfStatus
             ICollectionView dataView = CollectionViewSource.GetDefaultView(List.ItemsSource);
 
             dataView.SortDescriptions.Clear();
-            SortDescription sd = new SortDescription(sortBy, direction);
+            SortDescription sd = new(sortBy, direction);
             dataView.SortDescriptions.Add(sd);
             dataView.Refresh();
         }

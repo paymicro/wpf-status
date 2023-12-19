@@ -38,16 +38,6 @@
                     <GridViewColumn Header="Port" Width="60" DisplayMemberBinding="{Binding Port}" />
                     <GridViewColumn Header="Peers" Width="60" DisplayMemberBinding="{Binding Status.ConnectedPeers}" />
                     <GridViewColumn Header="Ok" Width="60" DisplayMemberBinding="{Binding IsOk}" />
-                    <!--<GridViewColumn Header="IsSynced" Width="70" >
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Status.IsSynced}"
-                                           Background="{Binding Status.IsSynced, Converter={StaticResource BoolToColorConverter}}"
-                                           FontWeight="Bold"
-                                           Foreground="White" HorizontalAlignment="Center" Margin="8,8,8,8" />
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>-->
                     <GridViewColumn Header="Layer" Width="80" DisplayMemberBinding="{Binding Status.SyncedLayer}" />
                     <GridViewColumn Header="Top" Width="60" DisplayMemberBinding="{Binding Status.TopLayer}" />
                     <GridViewColumn Header="Size" Width="70" DisplayMemberBinding="{Binding PostSetupStatus.SizeInTib}" />
@@ -76,36 +66,35 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*" />
                             <DataGridTextColumn Header="Address" Binding="{Binding Connections[0].Address}" Width="*" />
-                            <DataGridTextColumn Header="Uptime" Binding="{Binding Connections[0].UptimeSec}" Width="130" />
+                            <DataGridTextColumn Header="Uptime" Binding="{Binding Connections[0].UptimeSec}" Width="90" TextBlock.TextAlignment="Center">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style>
+                                        <Setter Property="TextBlock.TextAlignment" Value="Right"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridCheckBoxColumn Header="Outbound" Binding="{Binding Connections[0].Outbound}" Width="90" />
                         </DataGrid.Columns>
                     </DataGrid>
-                    <!--<ListBox d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding PeerInfos}" Margin="0,0,0,0">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Id}"/>
-                                    <DataGrid ItemsSource="{Binding Connections}"></DataGrid>
-                                    --><!--<ListBox ItemsSource="{Binding Connections}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid>
-                                                    <TextBlock Text="{Binding Address}"/>
-                                                    <TextBlock Text="{Binding Uptime}" Margin="300,0,0,0"/>
-                                                    <TextBlock Text="{Binding Outbound}" HorizontalAlignment="Left" Width="186" Margin="784,0,0,0"/>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>--><!--
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>-->
                 </TabItem>
                 <TabItem Header="Events">
-                    <Grid>
-                        <TextBlock Name="EventsText" TextWrapping="Wrap" Text="Events" Margin="10,10,10,10"/>
-                    </Grid>
+                    <DataGrid d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Events}"
+                          AutoGenerateColumns="False" 
+                          IsReadOnly="True"
+                          IsManipulationEnabled="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="110" />
+                            <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="*" />
+                            <DataGridTextColumn Header="Help" Binding="{Binding Help}" Width="*" >
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style>
+                                        <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+                                        <Setter Property="TextBlock.TextAlignment" Value="Left"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </TabItem>
             </TabControl>
         </Grid>
