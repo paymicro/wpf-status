@@ -43,6 +43,8 @@ namespace WpfStatus
 
         public bool IsUpdateEvents { get; set; } = true;
 
+        public List<PeerInfo> PeerInfos { get; set; } = [];
+
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
 
         public string LastUpdatedStr => LastUpdated.ToString("T");
@@ -108,6 +110,9 @@ namespace WpfStatus
                 OnPropertyChanged(nameof(Rewards));
                 OnPropertyChanged(nameof(TimeToNextReward));
                 IsUpdateEvents = false;
+
+                PeerInfos = await GetPeerInfoStream();
+                OnPropertyChanged(nameof(PeerInfo));
             }
         }
 
@@ -142,6 +147,16 @@ namespace WpfStatus
             return string.IsNullOrEmpty(output)
                 ? []
                 : JsonSerializer.Deserialize<List<Event>>(output, Json.SerializerOptions) ?? [];
+        }
+
+        private async Task<List<PeerInfo>> GetPeerInfoStream()
+        {
+            var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.AdminService.PeerInfoStream", maxTime: 1);
+
+            output = "[" + output.Replace("\r\n}\r\n{", "\r\n},\r\n{") + "]"; // fix Json array
+            return string.IsNullOrEmpty(output)
+                ? []
+                : JsonSerializer.Deserialize<List<PeerInfo>>(output, Json.SerializerOptions) ?? [];
         }
     }
 }

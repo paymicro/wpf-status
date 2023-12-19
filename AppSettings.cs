@@ -5,20 +5,15 @@ namespace WpfStatus
 {
     public class AppSettings
     {
-        private static string SettingsPath = "settings.json";
+        private static readonly string SettingsPath = "settings.json";
 
-        public List<NodeSetting> Nodes { get; set; }
+        public List<NodeSetting> Nodes { get; set; } = [];
 
-        public List<TableHeader> TableHeaders { get; set; }
-        public string AppTitle { get; set; }
-        public bool IsTimerEnabled { get; set; }
+        public List<TableHeader> TableHeaders { get; set; } = [];
 
-        public AppSettings()
-        {
-            Nodes = new();
-            AppTitle = "Status";
-            IsTimerEnabled = true;
-        }
+        public string AppTitle { get; set; } = "Status";
+
+        public bool IsTimerEnabled { get; set; } = true;
 
         public static void SaveSettings(AppSettings settings)
         {

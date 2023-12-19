@@ -1,6 +1,4 @@
-﻿using WpfStatus.api;
-using System.Diagnostics;
-using System.IO;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 

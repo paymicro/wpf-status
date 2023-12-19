@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Collections.ObjectModel;
 
 namespace WpfStatus
 {
@@ -24,11 +25,9 @@ namespace WpfStatus
         {
             appSettings = AppSettings.LoadSettings();
             model = new MainViewModel(appSettings);
-
             InitializeComponent();
 
             DataContext = model;
-            List.ItemsSource = model.Nodes;
         }
 
         private void StartTimer(int period = 15_000)
@@ -90,6 +89,12 @@ namespace WpfStatus
         {
             if (e.AddedItems[0] is Node node) {
                 EventsText.Text = string.Join(Environment.NewLine, node.Events.Select(EventToString));
+
+                model.PeerInfos.Clear();
+                foreach (var item in node.PeerInfos)
+                {
+                    model.PeerInfos.Add(item);
+                }
             }
         }
 
