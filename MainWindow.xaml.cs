@@ -12,9 +12,10 @@ namespace WpfStatus
     public partial class MainWindow : MetroWindow
     {
         Timer timer;
-        AppSettings appSettings;
+        readonly AppSettings appSettings;
+        readonly SynchronizationContext? uiContext;
         int timerProgress = 0;
-        MainViewModel model;
+        readonly MainViewModel model;
 
         GridViewColumnHeader _lastHeaderClicked = null;
         ListSortDirection _lastDirection = ListSortDirection.Ascending;
@@ -23,12 +24,57 @@ namespace WpfStatus
         {
             appSettings = AppSettings.LoadSettings();
             model = new MainViewModel(appSettings);
+            uiContext = SynchronizationContext.Current;
             InitializeComponent();
 
             DataContext = model;
+            UpdateInfo();
         }
 
-        private void StartTimer(int period = 15_000)
+        private void UpdateInfo()
+        {
+            var markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
+            var markEpochNumber = 6;
+            var markEpochBegin = DateTime.Parse("2023-10-06 11:00:00+0300");
+            var eDurationMs = TimeSpan.FromDays(14);  // 2 weeks
+            var official12hOffset = TimeSpan.FromDays(9.5); // -228h
+            var official12hOffset2 = TimeSpan.FromDays(10); // +12h
+            var ePassedNum = (int)((DateTime.Now - markEpochBegin) / eDurationMs);
+            var eCurrentNum = markEpochNumber + ePassedNum;
+            var eCurrentBegin = markEpochBegin.Add(eDurationMs * (eCurrentNum - markEpochNumber));
+
+            var events = new List<TimeEvent>
+            {
+                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum - 1} End" },
+                new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"PoST {eCurrentNum - 1} Begin"},
+                new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"PoST {eCurrentNum - 1} 12h End" },
+                new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" },
+                new() { DateTime = DateTime.Now, Desc = "We are here", EventType = 1 },
+            };
+
+            foreach (var node in model.Nodes)
+            {
+                var eli = node.Events.Select(e => e.Eligibilities).Where(e => e != null).FirstOrDefault();
+                if (eli != null)
+                {
+                    events.AddRange(eli.Eligibilities.Select(r => new TimeEvent() { Layer = r.Layer, Desc = node.Name, EventType = 2 }).ToList());
+                }
+            }
+
+            var eventsStr = events.Select(e =>
+                (e.DateTime - DateTime.Now).TotalHours.ToString("0.0") + "h" +
+                Environment.NewLine + e.Desc);
+
+            model.Info = string.Join(Environment.NewLine, eventsStr);
+            events.Sort();
+            model.TimeEvents.Clear();
+            foreach (var e in events)
+            {
+                model.TimeEvents.Add(e);
+            }
+        }
+
+        private void StartTimer(int period = 25_000)
         {
             timer = new Timer(_ =>
             {
@@ -36,8 +82,11 @@ namespace WpfStatus
                 model.ProgressValue = 100 * timerProgress / period;
                 if (timerProgress > period)
                 {
-                    UpdateAll_Click(this, new RoutedEventArgs());
                     timerProgress = 0;
+                    uiContext?.Send(x =>
+                    {
+                        UpdateAll_Click(this, new RoutedEventArgs());
+                    }, null);
                 }
             }, null, 0, 500);
         }
@@ -61,6 +110,7 @@ namespace WpfStatus
         private async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
             await model.UpdateAllNodes();
+            UpdateInfo();
         }
 
         private void AutoUpdate_Checked(object sender, RoutedEventArgs e)
@@ -71,6 +121,7 @@ namespace WpfStatus
         private void AutoUpdate_Unchecked(object sender, RoutedEventArgs e)
         {
             model.ProgressValue = 0;
+            timerProgress = 0;
             timer.Dispose();
         }
 

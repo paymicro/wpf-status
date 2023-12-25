@@ -30,7 +30,7 @@ namespace WpfStatus
                 }
                 else
                 {
-                    return (Status.IsSynced == true && Status.TopLayer.Number == Status.SyncedLayer.Number).ToString();
+                    return (Status.IsSynced == true && Status.TopLayer.Number == Status.SyncedLayer.Number) ? "✔" : "❌";
                 }
             }
         }
@@ -80,7 +80,7 @@ namespace WpfStatus
                     return TimeSpan.FromMinutes(min).ToString(@"d\d\ hh\:mm");
                 }
 
-                return "----";
+                return "🏁";
             }
         }
 
@@ -101,11 +101,12 @@ namespace WpfStatus
             {
                 PostSetupStatus = await GetPostSetupStatus();
                 OnPropertyChanged(nameof(PostSetupStatus));
+                IsUpdatePostSetup = false;
             }
 
             if (IsUpdateEvents)
             {
-                Events = await GetEventsStream();
+                Events = [.. (await GetEventsStream()).OrderByDescending(e => e.Timestamp)];
                 OnPropertyChanged(nameof(Events));
                 OnPropertyChanged(nameof(Rewards));
                 OnPropertyChanged(nameof(TimeToNextReward));

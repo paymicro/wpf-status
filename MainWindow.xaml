@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
-        xmlns:local="clr-namespace:WpfStatus"
+        xmlns:local="clr-namespace:WpfStatus" d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
         mc:Ignorable="d"
         Title="{Binding MainWindowTitle}" Height="600" Width="1000" FontFamily="Cascadia Code" FontSize="14">
     <Window.Resources>
@@ -14,16 +14,21 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="250"/>
+            <RowDefinition Height="250" MinHeight="50"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="100*"/>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="50" MinHeight="50"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200*" MinWidth="200"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="200"/>
+        </Grid.ColumnDefinitions>
         <ListView x:Name="List" Margin="10,10,10,10" d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Nodes}" SelectionChanged="List_SelectionChanged" GridViewColumnHeader.Click="GridViewColumnHeaderClickedHandler">
             <ListView.Resources>
                 <Style BasedOn="{StaticResource MahApps.Styles.ListViewItem}" TargetType="{x:Type ListViewItem}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsOk}" Value="False">
+                        <DataTrigger Binding="{Binding IsOk}" Value="❌">
                             <Setter Property="Background" Value="DarkRed" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsOk}" Value="Offline">
@@ -35,27 +40,28 @@
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Name" Width="100" DisplayMemberBinding="{Binding Name}" />
-                    <GridViewColumn Header="Port" Width="60" DisplayMemberBinding="{Binding Port}" />
-                    <GridViewColumn Header="Peers" Width="60" DisplayMemberBinding="{Binding Status.ConnectedPeers}" />
-                    <GridViewColumn Header="Ok" Width="60" DisplayMemberBinding="{Binding IsOk}" />
-                    <GridViewColumn Header="Layer" Width="80" DisplayMemberBinding="{Binding Status.SyncedLayer}" />
+                    <GridViewColumn Header="Host" Width="90" DisplayMemberBinding="{Binding Host}" />
+                    <GridViewColumn Header="Port" Width="50" DisplayMemberBinding="{Binding Port}" />
+                    <GridViewColumn Header="Peers" Width="50" DisplayMemberBinding="{Binding Status.ConnectedPeers}" />
+                    <GridViewColumn Header="Ok" Width="40" DisplayMemberBinding="{Binding IsOk}" />
+                    <GridViewColumn Header="Layer" Width="60" DisplayMemberBinding="{Binding Status.SyncedLayer}" />
                     <GridViewColumn Header="Top" Width="60" DisplayMemberBinding="{Binding Status.TopLayer}" />
                     <GridViewColumn Header="Size" Width="70" DisplayMemberBinding="{Binding PostSetupStatus.SizeInTib}" />
-                    <GridViewColumn Header="DataDir" Width="70" DisplayMemberBinding="{Binding PostSetupStatus.Opts.DataDir}" />
-                    <GridViewColumn Header="Rewards" Width="90" DisplayMemberBinding="{Binding Rewards}" />
+                    <GridViewColumn Header="Dir" Width="50" DisplayMemberBinding="{Binding PostSetupStatus.Opts.DataDir}" />
+                    <GridViewColumn Header="Rewards" Width="100" DisplayMemberBinding="{Binding Rewards}" />
                     <GridViewColumn Header="Next" Width="90" DisplayMemberBinding="{Binding TimeToNextReward}" />
-                    <GridViewColumn Header="Update" Width="70" >
+                    <GridViewColumn Header="Update" Width="60" >
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="▶" Click="Update_Click" />
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="Time upd" Width="90" DisplayMemberBinding="{Binding LastUpdatedStr}" />
+                    <GridViewColumn Header="Time upd" Width="75" DisplayMemberBinding="{Binding LastUpdatedStr}" />
                 </GridView>
             </ListView.View>
         </ListView>
-        <GridSplitter Grid.Row="1" Height="3" VerticalAlignment="Center" ShowsPreview="True" />
+        <GridSplitter Grid.Row="1" Height="3" VerticalAlignment="Center" ShowsPreview="False" />
         <Grid Grid.Row="2">
             <TabControl>
                 <TabItem Header="Peers">
@@ -83,7 +89,7 @@
                           IsReadOnly="True"
                           IsManipulationEnabled="False">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="110" />
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="110" SortDirection="Descending" />
                             <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="*" />
                             <DataGridTextColumn Header="Help" Binding="{Binding Help}" Width="*" >
                                 <DataGridTextColumn.ElementStyle>
@@ -98,10 +104,45 @@
                 </TabItem>
             </TabControl>
         </Grid>
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="3" Grid.ColumnSpan="3">
             <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
             <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom"/>
             <CheckBox Content="Auto Update" IsChecked="True" HorizontalAlignment="Left" Margin="10,0,0,24" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" Width="92" Height="18" VerticalAlignment="Bottom"/>
         </Grid>
+        <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="3" HorizontalAlignment="Center" ShowsPreview="False" />
+        <ScrollViewer Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3">
+            <!--<TextBlock Text="{Binding Info, Mode=OneWay}"></TextBlock>-->
+            <ListBox ItemsSource="{Binding TimeEvents}" IsHitTestVisible="False">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}">
+                        <Setter Property="Background" Value="LightCyan" />
+                        <Setter Property="Foreground" Value="Black" />
+                        <Setter Property="Margin" Value="5,5,5,0"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EventType}" Value="1">
+                                <Setter Property="Background" Value="LightBlue" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding EventType}" Value="2">
+                                <Setter Property="Background" Value="LightSalmon" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                        <Style.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Style.Resources>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,8">
+                            <TextBlock Text="{Binding Layer}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
     </Grid>
 </Controls:MetroWindow>

@@ -1,13 +1,12 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using WpfStatus.api;
 
 namespace WpfStatus
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private int _progressValue;
-
         public MainViewModel(AppSettings appSettings)
         {
             foreach (var node in appSettings.Nodes)
@@ -22,6 +21,8 @@ namespace WpfStatus
             }
             MainWindowTitle = appSettings.AppTitle;
         }
+
+        private int _progressValue;
 
         public int ProgressValue
         {
@@ -44,6 +45,20 @@ namespace WpfStatus
 
         public ObservableCollection<Event> Events { get; set; } = [];
 
+        private string _info = $"--- Info ---{Environment.NewLine}Loading...";
+
+        public string Info
+        {
+            get { return _info; }
+            set
+            {
+                _info = value;
+                OnPropertyChanged(nameof(Info));
+            }
+        }
+
+        public ObservableCollection<TimeEvent> TimeEvents { get; set; } = [ new() { DateTime = DateTime.Now, Desc = "loading..." } ];
+
         private Node? _selectedNode;
 
         public Node? SelectedNode
@@ -51,6 +66,7 @@ namespace WpfStatus
             get => _selectedNode;
             set
             {
+                _selectedNode = value;
                 if (value != null)
                 {
                     UpdatePeerInfosFrom(value);
@@ -59,10 +75,24 @@ namespace WpfStatus
             }
         }
 
+        private int updateAllCounter = 0;
+
         public async Task UpdateAllNodes()
         {
+            updateAllCounter++;
+            if (updateAllCounter > 5)
+            {
+                updateAllCounter = 0;
+            }
+
             foreach (var node in Nodes)
             {
+                if (updateAllCounter == 0)
+                {
+                    node.IsUpdateEvents = true;
+                    node.IsUpdatePostSetup = true;
+                }
+
                 await node.Update();
             }
 

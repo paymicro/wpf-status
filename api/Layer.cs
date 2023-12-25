@@ -1,14 +1,11 @@
-﻿using System.Text.Json.Serialization;
-
-namespace WpfStatus.api
+﻿namespace WpfStatus.api
 {
-    public class Layer
+    public class Layer: IComparable<Layer>
     {
         public int Number { get; set; }
 
-        public override string ToString()
-        {
-            return Number.ToString();
-        }
+        public int CompareTo(Layer? other) => Number.CompareTo(other?.Number ?? 0);
+
+        public override string ToString() => Number.ToString();
     }
 }
