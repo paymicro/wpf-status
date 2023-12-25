@@ -8,5 +8,6 @@
     }
   ],
   "appTitle": "WPF Status",
-  "isTimerEnabled": true
+  "isTimerEnabled": true,
+  "coinbase": ""
 }
