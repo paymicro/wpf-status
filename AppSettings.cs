@@ -9,6 +9,8 @@ namespace WpfStatus
 
         public List<NodeSetting> Nodes { get; set; } = [];
 
+        public string Coinbase { get; set; } = string.Empty;
+
         public List<TableHeader> TableHeaders { get; set; } = [];
 
         public string AppTitle { get; set; } = "Status";

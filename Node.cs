@@ -76,8 +76,7 @@ namespace WpfStatus
                 var reward = rewards.FirstOrDefault(r => r > top);
                 if (reward != 0)
                 {
-                    var min = (reward - top) * 5;;
-                    return TimeSpan.FromMinutes(min).ToString(@"d\d\ hh\:mm");
+                    return TimeToDaysString(TimeSpan.FromMinutes((reward - top) * 5));
                 }
 
                 return "🏁";

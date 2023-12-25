@@ -1,4 +1,6 @@
-﻿namespace WpfStatus
+﻿using System.Windows;
+
+namespace WpfStatus
 {
     public class TimeEvent: IComparable<TimeEvent>
     {
@@ -46,6 +48,10 @@
         }
 
         public string Desc { get; set; } = string.Empty;
+
+        public string RewardStr { get; set; } = string.Empty;
+
+        public Visibility RewardVisible { get; set; } = Visibility.Collapsed;
 
         public int EventType { get; set; } = 0;
 

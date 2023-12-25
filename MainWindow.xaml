@@ -111,8 +111,7 @@
         </Grid>
         <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="3" HorizontalAlignment="Center" ShowsPreview="False" />
         <ScrollViewer Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3">
-            <!--<TextBlock Text="{Binding Info, Mode=OneWay}"></TextBlock>-->
-            <ListBox ItemsSource="{Binding TimeEvents}" IsHitTestVisible="False">
+            <ListBox ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" IsHitTestVisible="False">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="{x:Type ListBoxItem}">
                         <Setter Property="Background" Value="LightCyan" />
@@ -123,6 +122,12 @@
                                 <Setter Property="Background" Value="LightBlue" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding EventType}" Value="2">
+                                <Setter Property="Background" Value="LightSkyBlue" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RewardVisible}" Value="0">
+                                <Setter Property="Background" Value="LightGreen" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RewardStr}" Value="❌">
                                 <Setter Property="Background" Value="LightSalmon" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -139,6 +144,7 @@
                             <TextBlock Text="{Binding Layer}" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding RewardStr}" HorizontalAlignment="Center" Visibility="{Binding RewardVisible}"/> 
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

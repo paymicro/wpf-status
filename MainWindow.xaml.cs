@@ -1,8 +1,10 @@
 ﻿using MahApps.Metro.Controls;
 using System.ComponentModel;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using static WpfStatus.Helper;
 
 namespace WpfStatus
 {
@@ -17,7 +19,7 @@ namespace WpfStatus
         int timerProgress = 0;
         readonly MainViewModel model;
 
-        GridViewColumnHeader _lastHeaderClicked = null;
+        GridViewColumnHeader _lastHeaderClicked;
         ListSortDirection _lastDirection = ListSortDirection.Ascending;
 
         public MainWindow()
@@ -31,7 +33,7 @@ namespace WpfStatus
             UpdateInfo();
         }
 
-        private void UpdateInfo()
+        private async void UpdateInfo()
         {
             var markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
             var markEpochNumber = 6;
@@ -42,6 +44,8 @@ namespace WpfStatus
             var ePassedNum = (int)((DateTime.Now - markEpochBegin) / eDurationMs);
             var eCurrentNum = markEpochNumber + ePassedNum;
             var eCurrentBegin = markEpochBegin.Add(eDurationMs * (eCurrentNum - markEpochNumber));
+            var beginEpohLayer = GetLayerByTime(eCurrentBegin);
+            var currentLayer = GetLayerByTime(DateTime.Now);
 
             var events = new List<TimeEvent>
             {
@@ -52,12 +56,38 @@ namespace WpfStatus
                 new() { DateTime = DateTime.Now, Desc = "We are here", EventType = 1 },
             };
 
+            var rewards = new List<RewardEntity>();
+
+            if (!string.IsNullOrWhiteSpace(appSettings.Coinbase))
+            {
+                using var client = new HttpClient();
+
+                var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=500");
+                rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
+
+                rewards = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+            }
+
             foreach (var node in model.Nodes)
             {
                 var eli = node.Events.Select(e => e.Eligibilities).Where(e => e != null).FirstOrDefault();
                 if (eli != null)
                 {
-                    events.AddRange(eli.Eligibilities.Select(r => new TimeEvent() { Layer = r.Layer, Desc = node.Name, EventType = 2 }).ToList());
+                    var preparedEvents = eli.Eligibilities.Select(r => new TimeEvent() { Layer = r.Layer, Desc = node.Name, EventType = 2 }).ToList();
+                    foreach (var e in preparedEvents.Where(prep => prep.Layer <= currentLayer))
+                    {
+                        var reward = rewards.FirstOrDefault(r => r.Layer == e.Layer);
+                        if (reward != null)
+                        {
+                            e.RewardStr = $"+ {Math.Round(reward.Total / 1000_000_000d, 3)}";
+                        }
+                        else
+                        {
+                            e.RewardStr = "❌";
+                        }
+                        e.RewardVisible = Visibility.Visible;
+                    }
+                    events.AddRange(preparedEvents);
                 }
             }
 
@@ -74,7 +104,7 @@ namespace WpfStatus
             }
         }
 
-        private void StartTimer(int period = 25_000)
+        private void StartTimer(int period = 30_000)
         {
             timer = new Timer(_ =>
             {
@@ -89,6 +119,13 @@ namespace WpfStatus
                     }, null);
                 }
             }, null, 0, 500);
+        }
+
+        private void StopTimer()
+        {
+            model.ProgressValue = 0;
+            timerProgress = 0;
+            timer.Dispose();
         }
 
         private async void Update_Click(object sender, RoutedEventArgs e)
@@ -120,9 +157,7 @@ namespace WpfStatus
 
         private void AutoUpdate_Unchecked(object sender, RoutedEventArgs e)
         {
-            model.ProgressValue = 0;
-            timerProgress = 0;
-            timer.Dispose();
+            StopTimer();
         }
 
         protected override void OnClosed(EventArgs e)
