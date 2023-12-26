@@ -1,4 +1,6 @@
-﻿namespace WpfStatus.Notification
+﻿using System.Windows;
+
+namespace WpfStatus.Notification
 {
     public class Telegram : IDisposable
     {
@@ -38,9 +40,9 @@
 
         public async Task Send(string Message = "Test")
         {
-            var myself = await client.Value.LoginUserIfNeeded();
             try
             {
+                var myself = await client.Value.LoginUserIfNeeded();
                 var dialogs = await client.Value.Messages_GetAllDialogs();
                 var target = dialogs.users.FirstOrDefault(
                         u => u.Value.MainUsername == settings.TelegramSendToUserName.TrimStart('@') ||
@@ -50,9 +52,9 @@
                     await client.Value.SendMessageAsync(target.Value, Message);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // ignored
+                MessageBox.Show(ex.Message, "Telegram exception");
             }
         }
 
