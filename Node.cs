@@ -73,7 +73,7 @@ namespace WpfStatus
                     return string.Empty;
                 }
 
-                var reward = rewards.FirstOrDefault(r => r > top);
+                var reward = rewards.OrderBy(r => r).FirstOrDefault(r => r > top);
                 if (reward != 0)
                 {
                     return TimeToDaysString(TimeSpan.FromMinutes((reward - top) * 5));
