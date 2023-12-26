@@ -21,15 +21,17 @@ namespace WpfStatus.Notification
                     case "phone_number": return settings.TelegramPhoneNumber;
                     case "verification_code":
                         {
-                            var dialog = new VerificationCodeDialog();
-                            if (dialog.ShowDialog() == true)
+                            string? result = null;
+                            Application.Current.Dispatcher.Invoke(() =>
                             {
-                                return dialog.ResponseTextBox.Text;
-                            }
-                            else
-                            {
-                                return null;
-                            }
+                                var dialog = new VerificationCodeDialog();
+                                if (dialog.ShowDialog() == true)
+                                {
+                                    result = dialog.ResponseTextBox.Text;
+                                }
+                            });
+                            return result;
+                            
                         }
                     default: return null;
                 }
