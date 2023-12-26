@@ -237,5 +237,10 @@ namespace WpfStatus
             dataView.SortDescriptions.Add(sd);
             dataView.Refresh();
         }
+
+        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var item = ItemsControl.ContainerFromElement(sender as ListBox, e.OriginalSource as DependencyObject) as ListBoxItem;
+        }
     }
 }

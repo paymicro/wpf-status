@@ -6,7 +6,7 @@
         xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:local="clr-namespace:WpfStatus" d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
         mc:Ignorable="d"
-        Title="{Binding MainWindowTitle}" Height="600" Width="1000" FontFamily="Cascadia Code" FontSize="14">
+        Title="{Binding MainWindowTitle}" Height="600" Width="1120" FontFamily="Cascadia Code" FontSize="14">
     <Window.Resources>
         <ResourceDictionary>
             <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
@@ -22,7 +22,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200*" MinWidth="200"/>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="180"/>
         </Grid.ColumnDefinitions>
         <ListView x:Name="List" Margin="10,10,10,10" d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Nodes}" SelectionChanged="List_SelectionChanged" GridViewColumnHeader.Click="GridViewColumnHeaderClickedHandler">
             <ListView.Resources>
@@ -61,7 +61,7 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <GridSplitter Grid.Row="1" Height="3" VerticalAlignment="Center" ShowsPreview="False" />
+        <GridSplitter Grid.Row="1" Height="4" VerticalAlignment="Center" ShowsPreview="False" />
         <Grid Grid.Row="2">
             <TabControl>
                 <TabItem Header="Peers">
@@ -109,46 +109,48 @@
             <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom"/>
             <CheckBox Content="Auto Update" IsChecked="True" HorizontalAlignment="Left" Margin="10,0,0,24" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" Width="92" Height="18" VerticalAlignment="Bottom"/>
         </Grid>
-        <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="3" HorizontalAlignment="Center" ShowsPreview="False" />
-        <ScrollViewer Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3">
-            <ListBox ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" IsHitTestVisible="False">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="{x:Type ListBoxItem}">
-                        <Setter Property="Background" Value="LightCyan" />
-                        <Setter Property="Foreground" Value="Black" />
-                        <Setter Property="Margin" Value="5,5,5,0"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding EventType}" Value="1">
-                                <Setter Property="Background" Value="LightBlue" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding EventType}" Value="2">
-                                <Setter Property="Background" Value="LightSkyBlue" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding RewardVisible}" Value="0">
-                                <Setter Property="Background" Value="LightGreen" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding RewardStr}" Value="❌">
-                                <Setter Property="Background" Value="LightSalmon" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                        <Style.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="10"/>
-                            </Style>
-                        </Style.Resources>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,8">
-                            <TextBlock Text="{Binding Layer}" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding RewardStr}" HorizontalAlignment="Center" Visibility="{Binding RewardVisible}"/> 
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </ScrollViewer>
+        <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
+        <ListBox Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" IsHitTestVisible="False" >
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <EventSetter
+                        Event="MouseUp" 
+                        Handler="ListBoxItem_PreviewMouseLeftButtonDown" />
+                    <Setter Property="Background" Value="LightCyan" />
+                    <Setter Property="Foreground" Value="Black" />
+                    <Setter Property="Margin" Value="5,5,5,0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EventType}" Value="1">
+                            <Setter Property="Background" Value="#25FFFFFF" />
+                            <Setter Property="Foreground" Value="Gold" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding EventType}" Value="2">
+                            <Setter Property="Background" Value="#FF80E0F0" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding RewardVisible}" Value="0">
+                            <Setter Property="Background" Value="LightGreen" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding RewardStr}" Value="❌">
+                            <Setter Property="Background" Value="LightSalmon" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                    <Style.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="10"/>
+                        </Style>
+                    </Style.Resources>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2,0,2">
+                        <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding RewardStr}" HorizontalAlignment="Center" Visibility="{Binding RewardVisible}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </Controls:MetroWindow>

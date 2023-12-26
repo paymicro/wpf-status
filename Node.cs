@@ -105,10 +105,14 @@ namespace WpfStatus
 
             if (IsUpdateEvents)
             {
-                Events = [.. (await GetEventsStream()).OrderByDescending(e => e.Timestamp)];
-                OnPropertyChanged(nameof(Events));
-                OnPropertyChanged(nameof(Rewards));
-                OnPropertyChanged(nameof(TimeToNextReward));
+                var newEvents = (await GetEventsStream()).OrderByDescending(e => e.Timestamp).ToList();
+                if (newEvents.Count != 0)
+                {
+                    Events = newEvents;
+                    OnPropertyChanged(nameof(Events));
+                    OnPropertyChanged(nameof(Rewards));
+                    OnPropertyChanged(nameof(TimeToNextReward));
+                }
                 IsUpdateEvents = false;
             }
 
