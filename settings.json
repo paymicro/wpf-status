@@ -9,5 +9,12 @@
   ],
   "appTitle": "WPF Status",
   "isTimerEnabled": true,
-  "coinbase": ""
+  "coinbase": "",
+  "notificationSettings": {
+    "telegramApiId": 0,
+    "telegramApiHash": "",
+    "telegramPhoneNumber": "+123456789",
+    "telegramSendToUserName": "@user",
+    "delaySec": 300
+  }
 }

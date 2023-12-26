@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Text.Json;
+using WpfStatus.Notification;
 
 namespace WpfStatus
 {
@@ -16,6 +17,8 @@ namespace WpfStatus
         public string AppTitle { get; set; } = "Status";
 
         public bool IsTimerEnabled { get; set; } = true;
+
+        public NotificationSettings NotificationSettings { get; set; } = new();
 
         public static void SaveSettings(AppSettings settings)
         {

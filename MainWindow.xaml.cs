@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using WpfStatus.Notification;
 using static WpfStatus.Helper;
 
 namespace WpfStatus
@@ -19,6 +20,9 @@ namespace WpfStatus
         int timerProgress = 0;
         readonly MainViewModel model;
 
+        DateTime lastNotification = DateTime.MinValue;
+        Telegram? telegram;
+
         GridViewColumnHeader _lastHeaderClicked;
         ListSortDirection _lastDirection = ListSortDirection.Ascending;
 
@@ -31,6 +35,10 @@ namespace WpfStatus
 
             DataContext = model;
             UpdateInfo();
+            if (appSettings.NotificationSettings.TelegramApiId != 0 && !string.IsNullOrEmpty(appSettings.NotificationSettings.TelegramApiHash))
+            {
+                telegram = new Telegram(appSettings.NotificationSettings);
+            }
         }
 
         private async void UpdateInfo()
@@ -60,12 +68,19 @@ namespace WpfStatus
 
             if (!string.IsNullOrWhiteSpace(appSettings.Coinbase))
             {
-                using var client = new HttpClient();
+                try
+                {
+                    using var client = new HttpClient();
 
-                var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=500");
-                rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
+                    var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=500");
+                    rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
 
-                rewards = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                    rewards = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                }
+                catch
+                {
+                    rewards = [];
+                }
             }
 
             foreach (var node in model.Nodes)
@@ -144,10 +159,30 @@ namespace WpfStatus
             }
         }
 
+        private async Task CheckNotifications()
+        {
+            if (!model.IsEnabledNotifications || (DateTime.Now - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
+            {
+                return;
+            }
+
+            if (telegram != null)
+            {
+                var invalidNodes = model.Nodes.Where(n => n.IsOk != "✔");
+                if (invalidNodes.Any())
+                {
+                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is't OK! {n.IsOk} | {n.Status}"));
+                    await telegram.Send(message);
+                    lastNotification = DateTime.Now;
+                }
+            }
+        }
+
         private async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
             await model.UpdateAllNodes();
             UpdateInfo();
+            await CheckNotifications();
         }
 
         private void AutoUpdate_Checked(object sender, RoutedEventArgs e)
@@ -164,6 +199,7 @@ namespace WpfStatus
         {
             // AppSettings.SaveSettings(appSettings);
             timer.Dispose();
+            telegram?.Dispose();
             base.OnClosed(e);
         }
 

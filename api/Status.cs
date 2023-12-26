@@ -11,5 +11,10 @@ namespace WpfStatus.api
         public Layer SyncedLayer { get; set; } = new();
 
         public Layer TopLayer { get; set; } = new();
+
+        public override string ToString()
+        {
+            return $"IsSync: {IsSynced==true} | Layer: {SyncedLayer.Number}/{TopLayer.Number}";
+        }
     }
 }

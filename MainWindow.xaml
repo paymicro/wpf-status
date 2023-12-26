@@ -107,10 +107,13 @@
         <Grid Grid.Row="3" Grid.ColumnSpan="3">
             <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
             <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom"/>
-            <CheckBox Content="Auto Update" IsChecked="True" HorizontalAlignment="Left" Margin="10,0,0,24" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" Width="92" Height="18" VerticalAlignment="Bottom"/>
+            <StackPanel Orientation="Horizontal" Margin="10,0,0,24" VerticalAlignment="Bottom">
+                <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Margin="0,0,16,0" HorizontalAlignment="Left" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked"/>
+                <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="0,0,16,0" HorizontalAlignment="Left"/>
+            </StackPanel>
         </Grid>
         <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
-        <ListBox Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" IsHitTestVisible="False" >
+        <ListBox Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" >
             <ListBox.ItemContainerStyle>
                 <Style TargetType="{x:Type ListBoxItem}">
                     <EventSetter
@@ -120,6 +123,10 @@
                     <Setter Property="Foreground" Value="Black" />
                     <Setter Property="Margin" Value="5,5,5,0"/>
                     <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True" >
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Background" Value="Gold" />
+                        </Trigger>
                         <DataTrigger Binding="{Binding EventType}" Value="1">
                             <Setter Property="Background" Value="#25FFFFFF" />
                             <Setter Property="Foreground" Value="Gold" />
@@ -138,6 +145,7 @@
                         <Style TargetType="Border">
                             <Setter Property="CornerRadius" Value="10"/>
                         </Style>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
                     </Style.Resources>
                 </Style>
             </ListBox.ItemContainerStyle>

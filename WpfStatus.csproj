@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+    <PackageReference Include="WTelegramClient" Version="3.6.2" />
   </ItemGroup>
 
   <ItemGroup>

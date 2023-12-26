@@ -25,7 +25,9 @@ namespace WpfStatus
                 });
             }
             MainWindowTitle = appSettings.AppTitle;
-            UpdateInfo();
+            IsAutoUpdate = appSettings.IsTimerEnabled;
+            IsEnabledNotifications = appSettings.NotificationSettings.Enabled;
+            _ = UpdateInfo();
         }
 
         private int _progressValue;
@@ -44,6 +46,10 @@ namespace WpfStatus
         }
 
         public string MainWindowTitle { get; set; }
+
+        public bool IsAutoUpdate { get; set; }
+
+        public bool IsEnabledNotifications { get; set; }
 
         public ObservableCollection<Node> Nodes { get; set; } = [];
 
