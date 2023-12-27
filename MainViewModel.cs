@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using ControlzEx.Standard;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http;
 using System.Windows;
@@ -9,7 +10,8 @@ namespace WpfStatus
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly AppSettings appSettings;
+        readonly AppSettings appSettings;
+        readonly List<ExportNodeLayer> nodeLayers;
 
         public MainViewModel(AppSettings appSettings)
         {
@@ -27,10 +29,11 @@ namespace WpfStatus
             MainWindowTitle = appSettings.AppTitle;
             IsAutoUpdate = appSettings.IsTimerEnabled;
             IsEnabledNotifications = appSettings.NotificationSettings.Enabled;
+            nodeLayers = ExportNodeLayer.Load();
             _ = UpdateInfo();
         }
 
-        private int _progressValue;
+        int _progressValue;
 
         public int ProgressValue
         {
@@ -57,19 +60,7 @@ namespace WpfStatus
 
         public ObservableCollection<Event> Events { get; set; } = [];
 
-        private string _info = $"--- Info ---{Environment.NewLine}Loading...";
-
-        public string Info
-        {
-            get { return _info; }
-            set
-            {
-                _info = value;
-                OnPropertyChanged(nameof(Info));
-            }
-        }
-
-        public ObservableCollection<TimeEvent> TimeEvents { get; set; } = [ new() { DateTime = DateTime.Now, Desc = "loading..." } ];
+        public ObservableCollection<TimeEvent> TimeEvents { get; set; } = [];
 
         private Node? _selectedNode;
 
@@ -87,20 +78,15 @@ namespace WpfStatus
             }
         }
 
-        private int updateAllCounter = 0;
+        DateTime lastUpdateAll = DateTime.MinValue;
 
         public async Task UpdateAllNodes()
         {
-            updateAllCounter++;
-            if (updateAllCounter > 5)
-            {
-                updateAllCounter = 0;
-            }
-
             foreach (var node in Nodes)
             {
-                if (updateAllCounter == 0)
+                if ((DateTime.Now - lastUpdateAll).TotalMinutes > 5)
                 {
+                    lastUpdateAll = DateTime.Now;
                     node.IsUpdateEvents = true;
                     node.IsUpdatePostSetup = true;
                 }
@@ -112,13 +98,32 @@ namespace WpfStatus
             {
                 UpdatePeerInfosFrom(_selectedNode);
             }
+            await UpdateInfo();
         }
 
-        private List<RewardEntity> RewardsList = [];
+        List<RewardEntity> RewardsList = [];
 
-        private DateTime lastGettingRewards = DateTime.MinValue;
+        DateTime lastGettingRewards = DateTime.MinValue;
 
-        public async Task UpdateInfo()
+        void UpdateSavedLayers(string nodeName, string layerNums)
+        {
+            var savedNode = nodeLayers.FirstOrDefault(n => n.NodeName == nodeName);
+            if (savedNode == default)
+            {
+                nodeLayers.Add(
+                    new ExportNodeLayer()
+                    {
+                        NodeName = nodeName,
+                        Eligibilities = layerNums
+                    });
+            }
+            else
+            {
+                savedNode.Eligibilities = layerNums;
+            }
+        }
+
+        async Task UpdateInfo()
         {
             var markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
             var markEpochNumber = 6;
@@ -153,37 +158,58 @@ namespace WpfStatus
             foreach (var node in Nodes)
             {
                 var eli = node.Events.Select(e => e.Eligibilities).Where(e => e != null).FirstOrDefault();
+                List<TimeEvent> preparedEvents = [];
                 if (eli != null)
                 {
-                    var preparedEvents = eli.Eligibilities.Select(r => new TimeEvent() { Layer = r.Layer, Desc = node.Name, EventType = 2 }).ToList();
-                    foreach (var e in preparedEvents.Where(prep => prep.Layer <= currentLayer))
+                    UpdateSavedLayers(node.Name, string.Join(',', eli.Eligibilities.Select(r => r.Layer)));
+                    preparedEvents = eli.Eligibilities.Select(r => new TimeEvent()
                     {
-                        var reward = RewardsList.FirstOrDefault(r => r.Layer == e.Layer);
-                        if (reward != null)
-                        {
-                            e.RewardStr = $"+ {Math.Round(reward.Total / 1000_000_000d, 3)}";
-                        }
-                        else
-                        {
-                            e.RewardStr = "❌";
-                        }
-                        e.RewardVisible = Visibility.Visible;
-                    }
-                    events.AddRange(preparedEvents);
+                        Layer = r.Layer,
+                        Desc = node.Name,
+                        EventType = 2
+                    }).ToList();
                 }
+                else
+                {
+                    var saved = nodeLayers.FirstOrDefault(n => n.NodeName == node.Name);
+                    if (saved != default)
+                    {
+                        preparedEvents = saved.Eligibilities.Split(',').Select(l => new TimeEvent()
+                        {
+                            Layer = Convert.ToInt32(l),
+                            Desc = node.Name,
+                            EventType = 2
+                        }).ToList();
+                    }
+                }
+                foreach (var e in preparedEvents.Where(prep => prep.Layer <= currentLayer))
+                {
+                    var reward = RewardsList.FirstOrDefault(r => r.Layer == e.Layer);
+                    if (reward != null)
+                    {
+                        e.RewardStr = $"+ {Math.Round(reward.Total / 1000_000_000d, 3)}";
+                    }
+                    else
+                    {
+                        e.RewardStr = "❌";
+                    }
+                    e.RewardVisible = Visibility.Visible;
+                }
+                events.AddRange(preparedEvents);
             }
 
             var eventsStr = events.Select(e =>
                 (e.DateTime - DateTime.Now).TotalHours.ToString("0.0") + "h" +
                 Environment.NewLine + e.Desc);
 
-            Info = string.Join(Environment.NewLine, eventsStr);
             events.Sort();
             TimeEvents.Clear();
             foreach (var e in events)
             {
                 TimeEvents.Add(e);
             }
+
+            ExportNodeLayer.Save(nodeLayers);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -193,7 +219,7 @@ namespace WpfStatus
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void UpdatePeerInfosFrom(Node node)
+        void UpdatePeerInfosFrom(Node node)
         {
             PeerInfos.Clear();
             foreach (var item in node.PeerInfos)

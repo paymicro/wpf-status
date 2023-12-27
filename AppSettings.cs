@@ -6,7 +6,7 @@ namespace WpfStatus
 {
     public class AppSettings
     {
-        private static readonly string SettingsPath = "settings.json";
+        static readonly string SettingsPath = "settings.json";
 
         public List<NodeSetting> Nodes { get; set; } = [];
 
