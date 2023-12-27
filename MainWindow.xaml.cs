@@ -14,14 +14,14 @@ namespace WpfStatus
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        Timer timer;
+        Timer? timer;
         readonly AppSettings appSettings;
         readonly SynchronizationContext? uiContext;
         int timerProgress = 0;
         readonly MainViewModel model;
 
         DateTime lastNotification = DateTime.MinValue;
-        Telegram? telegram;
+        readonly Telegram? telegram;
 
         GridViewColumnHeader _lastHeaderClicked;
         ListSortDirection _lastDirection = ListSortDirection.Ascending;
@@ -171,7 +171,7 @@ namespace WpfStatus
                 var invalidNodes = model.Nodes.Where(n => n.IsOk != "✔");
                 if (invalidNodes.Any())
                 {
-                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is't OK! {n.IsOk} | {n.Status}"));
+                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is {n.IsOk} | {n.Status}"));
                     await telegram.Send(message);
                     lastNotification = DateTime.Now;
                 }
@@ -198,7 +198,7 @@ namespace WpfStatus
         protected override void OnClosed(EventArgs e)
         {
             // AppSettings.SaveSettings(appSettings);
-            timer.Dispose();
+            timer?.Dispose();
             telegram?.Dispose();
             base.OnClosed(e);
         }

@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Windows;
 
 namespace WpfStatus
@@ -9,7 +12,7 @@ namespace WpfStatus
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
@@ -21,10 +24,8 @@ namespace WpfStatus
 
                 if (request == MessageBoxResult.OK)
                 {
-                    Process.Start("explorer", "https://github.com/fullstorydev/grpcurl/releases/latest");
+                    await Helper.DownloadGRPCurl();
                 }
-
-                this.Shutdown();
             }
         }
     }

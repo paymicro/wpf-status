@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
+using System.IO.Compression;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace WpfStatus
 {
@@ -78,6 +81,26 @@ namespace WpfStatus
         public static DateTime GetTimeByLayer(int layer)
         {
             return markLayerTime.AddMinutes((layer - markLayerId) * layerDurationMinutes);
+        }
+
+        public static async Task DownloadGRPCurl()
+        {
+            var fileName = "grpcurl.exe";
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.UserAgent.TryParseAdd("request");
+            var result = await client.GetStringAsync(@"https://api.github.com/repos/fullstorydev/grpcurl/releases/latest");
+            if (result != null)
+            {
+                var match = Regex.Match(result, @"""browser_download_url"":""(?<download>[^""]*_windows_x86_64\.zip)""");
+                if (match.Success)
+                {
+                    var url = match.Groups["download"].Value;
+                    using var stream = await client.GetStreamAsync(url);
+                    using var archive = new ZipArchive(stream);
+                    var exe = archive.Entries.FirstOrDefault(e => e.FullName.Equals(fileName, StringComparison.InvariantCultureIgnoreCase));
+                    exe?.ExtractToFile(exe.FullName);
+                }
+            }
         }
     }
 }
