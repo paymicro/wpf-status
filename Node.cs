@@ -76,7 +76,7 @@ namespace WpfStatus
                 var reward = rewards.OrderBy(r => r).FirstOrDefault(r => r > top);
                 if (reward != 0)
                 {
-                    return TimeToDaysString(TimeSpan.FromMinutes((reward - top) * 5));
+                    return TimeToDaysString(TimeSpan.FromMinutes((reward - top - 1) * 5));
                 }
 
                 return "🏁";
@@ -114,6 +114,10 @@ namespace WpfStatus
                     OnPropertyChanged(nameof(TimeToNextReward));
                 }
                 IsUpdateEvents = false;
+            }
+            else if (Rewards.Length != 0)
+            {
+                OnPropertyChanged(nameof(TimeToNextReward));
             }
 
             PeerInfos = await GetPeerInfoStream();

@@ -122,10 +122,13 @@
                     <Setter Property="Background" Value="LightCyan" />
                     <Setter Property="Foreground" Value="Black" />
                     <Setter Property="Margin" Value="5,5,5,0"/>
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True" >
-                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="Foreground" Value="White" />
                             <Setter Property="Background" Value="Gold" />
+                            <Setter Property="Margin" Value="10,10" />
                         </Trigger>
                         <DataTrigger Binding="{Binding EventType}" Value="1">
                             <Setter Property="Background" Value="#25FFFFFF" />
@@ -143,9 +146,12 @@
                     </Style.Triggers>
                     <Style.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="10"/>
+                            <Setter Property="CornerRadius" Value="5"/>
                         </Style>
                         <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="White" />
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="Red"/>
                     </Style.Resources>
                 </Style>
             </ListBox.ItemContainerStyle>

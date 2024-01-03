@@ -1,5 +1,4 @@
-﻿using ControlzEx.Standard;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net.Http;
 using System.Windows;
@@ -99,6 +98,7 @@ namespace WpfStatus
                 UpdatePeerInfosFrom(_selectedNode);
             }
             await UpdateInfo();
+            ExportNodeLayer.Save(nodeLayers);
         }
 
         List<RewardEntity> RewardsList = [];
@@ -123,7 +123,7 @@ namespace WpfStatus
             }
         }
 
-        async Task UpdateInfo()
+        async Task UpdateInfo(bool updateRewards = true)
         {
             var markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
             var markEpochNumber = 6;
@@ -146,10 +146,13 @@ namespace WpfStatus
                 new() { DateTime = DateTime.Now, Desc = "We are here", EventType = 1 },
             };
 
-            if (!string.IsNullOrWhiteSpace(appSettings.Coinbase) && (DateTime.Now - lastGettingRewards).TotalMinutes > 2)
+            if (updateRewards &&
+                !string.IsNullOrWhiteSpace(appSettings.Coinbase) &&
+                appSettings.Coinbase.StartsWith("sm1qqqqqq") &&
+                (DateTime.Now - lastGettingRewards).TotalMinutes > 2)
             {
                 using var client = new HttpClient();
-                var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=500");
+                var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=200");
                 var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
                 lastGettingRewards = DateTime.Now;
                 RewardsList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
@@ -202,14 +205,19 @@ namespace WpfStatus
                 (e.DateTime - DateTime.Now).TotalHours.ToString("0.0") + "h" +
                 Environment.NewLine + e.Desc);
 
+            var selectedEvent = TimeEvents.FirstOrDefault(e => e.IsSelected);
+            var newSelectedEvent = events.FirstOrDefault(e => e.Layer == selectedEvent?.Layer);
+            if (newSelectedEvent != null)
+            {
+                newSelectedEvent.IsSelected = true;
+            }
+
             events.Sort();
             TimeEvents.Clear();
             foreach (var e in events)
             {
                 TimeEvents.Add(e);
             }
-
-            ExportNodeLayer.Save(nodeLayers);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
