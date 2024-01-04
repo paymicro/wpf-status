@@ -38,7 +38,7 @@ namespace WpfStatus
             }
         }
 
-        private void StartTimer(int period = 30_000)
+        void StartTimer(int period = 30_000)
         {
             timer = new Timer(_ =>
             {
@@ -55,14 +55,14 @@ namespace WpfStatus
             }, null, 0, 500);
         }
 
-        private void StopTimer()
+        void StopTimer()
         {
             model.ProgressValue = 0;
             timerProgress = 0;
             timer?.Dispose();
         }
 
-        private async void Update_Click(object sender, RoutedEventArgs e)
+        async void Update_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Node node)
             {
@@ -78,7 +78,7 @@ namespace WpfStatus
             }
         }
 
-        private async Task CheckNotifications()
+        async Task CheckNotifications()
         {
             if (!model.IsEnabledNotifications || (DateTime.Now - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
             {
@@ -97,18 +97,18 @@ namespace WpfStatus
             }
         }
 
-        private async void UpdateAll_Click(object sender, RoutedEventArgs e)
+        async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
             await model.UpdateAllNodes();
             await CheckNotifications();
         }
 
-        private void AutoUpdate_Checked(object sender, RoutedEventArgs e)
+        void AutoUpdate_Checked(object sender, RoutedEventArgs e)
         {
             StartTimer();
         }
 
-        private void AutoUpdate_Unchecked(object sender, RoutedEventArgs e)
+        void AutoUpdate_Unchecked(object sender, RoutedEventArgs e)
         {
             StopTimer();
         }
@@ -121,15 +121,35 @@ namespace WpfStatus
             base.OnClosed(e);
         }
 
-        private void List_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        void List_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.AddedItems[0] is Node node) {
+            if (e.AddedItems.Count != 0 && e.AddedItems[0] is Node node) {
                 model.SelectedNode = node;
+
+                var newIndex = false;
+                var eventInFuture = model.TimeEvents.FirstOrDefault(t => t.DateTime > DateTime.Now && t.Desc == node.Name);
+                if (eventInFuture != null)
+                {
+                    ListTimeEvents.SelectedItem = eventInFuture;
+                    newIndex = true;
+                }
+                else
+                {
+                    var eventInPast = model.TimeEvents.FirstOrDefault(t => t.DateTime < DateTime.Now && t.Desc == node.Name);
+                    if (eventInPast != null)
+                    {
+                        ListTimeEvents.SelectedItem = eventInPast;
+                        newIndex = true;
+                    }
+                }
+                if (newIndex)
+                {
+                    ListTimeEvents.ScrollIntoView(ListTimeEvents.SelectedItem);
+                }
             }
         }
 
-        private void GridViewColumnHeaderClickedHandler(object sender,
-                                            RoutedEventArgs e)
+        void GridViewColumnHeaderClickedHandler(object sender, RoutedEventArgs e)
         {
             var headerClicked = e.OriginalSource as GridViewColumnHeader;
             ListSortDirection direction;
@@ -182,7 +202,7 @@ namespace WpfStatus
             }
         }
 
-        private void Sort(string sortBy, ListSortDirection direction)
+        void Sort(string sortBy, ListSortDirection direction)
         {
             ICollectionView dataView = CollectionViewSource.GetDefaultView(List.ItemsSource);
 
@@ -192,10 +212,19 @@ namespace WpfStatus
             dataView.Refresh();
         }
 
-        private void ListBoxItem_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        void ListTimeEvents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // TODO
-            var item = ItemsControl.ContainerFromElement(sender as ListBox, e.OriginalSource as DependencyObject) as ListBoxItem;
+            if (e.AddedItems.Count != 0 && e.AddedItems[0] is TimeEvent timeEvent)
+            {
+                for (var i = 0; i < List.Items.Count; i++)
+                {
+                    if (List.Items[i] is Node node && node.Name == timeEvent.Desc)
+                    {
+                        List.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
         }
     }
 }

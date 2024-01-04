@@ -139,13 +139,14 @@ namespace WpfStatus
 
             var events = new List<TimeEvent>
             {
-                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum - 1} 🏁" },
+                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}" },
                 new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡"},
                 new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" },
                 new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" },
                 new() { DateTime = DateTime.Now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here },
             };
 
+            var addRewardResults = false;
             if (updateRewards &&
                 !string.IsNullOrWhiteSpace(appSettings.Coinbase) &&
                 appSettings.Coinbase.StartsWith("sm1qqqqqq") &&
@@ -156,6 +157,7 @@ namespace WpfStatus
                 var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
                 lastGettingRewards = DateTime.Now;
                 RewardsList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                addRewardResults = true;
             }
 
             foreach (var node in Nodes)
@@ -185,18 +187,21 @@ namespace WpfStatus
                         }).ToList();
                     }
                 }
-                foreach (var e in preparedEvents.Where(prep => prep.Layer <= currentLayer))
+                if (addRewardResults)
                 {
-                    var reward = RewardsList.FirstOrDefault(r => r.Layer == e.Layer);
-                    if (reward != null)
+                    foreach (var e in preparedEvents.Where(prep => prep.Layer <= currentLayer))
                     {
-                        e.RewardStr = $"✅ {Math.Round(reward.Total / 1000_000_000d, 3)}";
+                        var reward = RewardsList.FirstOrDefault(r => r.Layer == e.Layer);
+                        if (reward != null)
+                        {
+                            e.RewardStr = $"+{Math.Round(reward.Total / 1000_000_000d, 3)}";
+                        }
+                        else
+                        {
+                            e.RewardStr = "❌ Missed";
+                        }
+                        e.RewardVisible = Visibility.Visible;
                     }
-                    else
-                    {
-                        e.RewardStr = "❌";
-                    }
-                    e.RewardVisible = Visibility.Visible;
                 }
                 events.AddRange(preparedEvents);
             }

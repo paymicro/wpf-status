@@ -114,7 +114,7 @@
             </StackPanel>
         </Grid>
         <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
-        <ListBox Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}">
+        <ListBox x:Name="ListTimeEvents" Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged">
             <ListBox.Resources>
                 <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Red" />
                 <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Green" />
@@ -151,7 +151,7 @@
                                     <Storyboard>
                                         <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
                                             <SplineThicknessKeyFrame KeyTime="00:00:00" Value="5,2" />
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00.200" Value="10,8,5,2" />
+                                            <SplineThicknessKeyFrame KeyTime="00:00:00.200" Value="10,8,5,0" />
                                         </ThicknessAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </BeginStoryboard>
@@ -160,7 +160,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00" Value="10,8,5,2" />
+                                            <SplineThicknessKeyFrame KeyTime="00:00:00" Value="10,8,5,0" />
                                             <SplineThicknessKeyFrame KeyTime="00:00:00.100" Value="5,2" />
                                         </ThicknessAnimationUsingKeyFrames>
                                     </Storyboard>
@@ -198,8 +198,8 @@
                     <StackPanel x:Name="stackPanel" Margin="0,2,0,2">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding RewardStr}" FontWeight="Bold" Padding="10,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
-                            </StackPanel>
+                            <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right" Background="Green" Foreground="White" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
+                        </StackPanel>
                         <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
                     </StackPanel>
