@@ -139,11 +139,11 @@ namespace WpfStatus
 
             var events = new List<TimeEvent>
             {
-                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum - 1} End" },
-                new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"PoST {eCurrentNum - 1} Begin"},
-                new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"PoST {eCurrentNum - 1} 12h End" },
+                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum - 1} 🏁" },
+                new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡"},
+                new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" },
                 new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" },
-                new() { DateTime = DateTime.Now, Desc = "We are here", EventType = 1 },
+                new() { DateTime = DateTime.Now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here },
             };
 
             if (updateRewards &&
@@ -169,7 +169,7 @@ namespace WpfStatus
                     {
                         Layer = r.Layer,
                         Desc = node.Name,
-                        EventType = 2
+                        EventType = Enums.TimeEventTypeEnum.Reward
                     }).ToList();
                 }
                 else
@@ -181,7 +181,7 @@ namespace WpfStatus
                         {
                             Layer = Convert.ToInt32(l),
                             Desc = node.Name,
-                            EventType = 2
+                            EventType = Enums.TimeEventTypeEnum.Reward
                         }).ToList();
                     }
                 }
@@ -190,7 +190,7 @@ namespace WpfStatus
                     var reward = RewardsList.FirstOrDefault(r => r.Layer == e.Layer);
                     if (reward != null)
                     {
-                        e.RewardStr = $"+ {Math.Round(reward.Total / 1000_000_000d, 3)}";
+                        e.RewardStr = $"✅ {Math.Round(reward.Total / 1000_000_000d, 3)}";
                     }
                     else
                     {
@@ -216,6 +216,14 @@ namespace WpfStatus
             TimeEvents.Clear();
             foreach (var e in events)
             {
+                if (e.EventType == Enums.TimeEventTypeEnum.Reward)
+                {
+                    var days = (e.DateTime - DateTime.Now).TotalDays;
+                    if (days > 0 && days < 0.5)
+                    {
+                        e.EventType = Enums.TimeEventTypeEnum.CloseReward;
+                    }
+                }
                 TimeEvents.Add(e);
             }
         }

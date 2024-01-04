@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using WpfStatus.Enums;
 
 namespace WpfStatus
 {
@@ -12,7 +13,7 @@ namespace WpfStatus
         public TimeEvent() {
             timer = new (_ =>
             {
-                if (EventType == 1)
+                if (EventType == TimeEventTypeEnum.Here)
                 {
                     DateTime = DateTime.Now;
                     OnPropertyChanged(nameof(Layer));
@@ -53,7 +54,7 @@ namespace WpfStatus
         {
             get
             {
-                if (EventType == 1)
+                if (EventType == TimeEventTypeEnum.Here)
                 {
                     return DateTime.Now.ToString("T");
                 }
@@ -65,7 +66,7 @@ namespace WpfStatus
                     {
                         return _dateTime.ToString("g");
                     }
-                    return $"🏁 {Helper.TimeToDaysString(time.Duration())} ago";
+                    return $"🏁 {Helper.TimeToDaysString(time.Duration())}";
                 }
 
                 if (IsSelected)
@@ -73,7 +74,7 @@ namespace WpfStatus
                     return _dateTime.ToString("g");
                 }
 
-                return $"in {Helper.TimeToDaysString(time)}";
+                return $"+ {Helper.TimeToDaysString(time)}";
             }
         }
 
@@ -105,7 +106,7 @@ namespace WpfStatus
 
         public Visibility RewardVisible { get; set; } = Visibility.Collapsed;
 
-        public int EventType { get; set; } = 0;
+        public TimeEventTypeEnum EventType { get; set; } = TimeEventTypeEnum.None;
 
         public int CompareTo(TimeEvent? other) => DateTime.CompareTo(other?.DateTime);
 
