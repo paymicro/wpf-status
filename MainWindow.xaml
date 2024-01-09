@@ -8,7 +8,7 @@
         xmlns:local="clr-namespace:WpfStatus" xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Class="WpfStatus.MainWindow"
         d:DataContext="{d:DesignInstance Type={x:Type local:MainViewModel}}"
         mc:Ignorable="d"
-        Title="{Binding MainWindowTitle}" Height="600" Width="1120" FontSize="14" FontFamily="Cascadia Code" >
+        Title="{Binding MainWindowTitle}" Height="500" Width="1150" FontSize="14" FontFamily="Cascadia Code" >
     <Controls:MetroWindow.Resources>
         <ResourceDictionary>
             <CollectionViewSource x:Key='timeEventsSorted' Source="{Binding TimeEvents}" IsLiveSortingRequested="True">
@@ -23,9 +23,9 @@
     </Controls:MetroWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="250" MinHeight="50"/>
+            <RowDefinition Height="250*" MinHeight="50"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="100*"/>
+            <RowDefinition Height="170"/>
             <RowDefinition Height="50" MinHeight="50"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -80,7 +80,7 @@
                     <GridViewColumn Header="Dir" Width="50" DisplayMemberBinding="{Binding PostSetupStatus.Opts.DataDir}" />
                     <GridViewColumn Header="Rewards" Width="100" DisplayMemberBinding="{Binding Rewards}" />
                     <GridViewColumn Header="Next" Width="90" DisplayMemberBinding="{Binding TimeToNextReward}" />
-                    <GridViewColumn Header="Action" x:Name="action" Width="100" CellTemplate="{StaticResource comboBoxTemplate}" />
+                    <GridViewColumn Header="Action" x:Name="action" Width="80" CellTemplate="{StaticResource comboBoxTemplate}" />
                     <GridViewColumn Header="Time upd" Width="75" DisplayMemberBinding="{Binding LastUpdatedStr}" />
                 </GridView>
             </ListView.View>
@@ -121,9 +121,6 @@
                             </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                </TabItem>
-                <TabItem Header="Output">
-                    <TextBox Text="asd"/>
                 </TabItem>
             </TabControl>
         </Grid>
@@ -182,7 +179,7 @@
                             <Setter Property="Foreground" Value="Black" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EventType}" Value="Reward">
-                            <Setter Property="Background" Value="Goldenrod" />
+                            <Setter Property="StackPanel.Background" Value="Goldenrod" />
                             <Setter Property="Foreground" Value="Black" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EventType}" Value="None">
@@ -192,18 +189,16 @@
                             <Setter Property="Background" Value="#33909090" />
                             <Setter Property="Foreground" Value="#33FFFFFF" />
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding RewardStr}" Value="❌">
-                            <Setter Property="Background" Value="#33FFA07A" />
-                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel x:Name="stackPanel" Margin="0,2,0,2">
+                    <StackPanel Margin="0,2,0,2">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right" Background="Green" Foreground="White" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
+                            <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right"
+                                       Background="DarkGray" Foreground="Black" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
                         </StackPanel>
                         <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>

@@ -18,7 +18,7 @@ namespace WpfStatus
                 {
                     if (EventType == TimeEventTypeEnum.Here)
                     {
-                        DateTime = DateTime.Now;
+                        DateTime = DateTime.UtcNow;
                         OnPropertyChanged(nameof(Layer));
                     }
                     else
@@ -42,12 +42,16 @@ namespace WpfStatus
         }
 
         DateTime _dateTime;
+
+        /// <summary>
+        /// DateTime in UTC
+        /// </summary>
         public DateTime DateTime
         {
             get => _dateTime;
             set
             {
-                _dateTime = value;
+                _dateTime = value.ToUniversalTime();
                 _layer = Helper.GetLayerByTime(value);
                 OnPropertyChanged(nameof(DateTime));
                 OnPropertyChanged(nameof(InDays));
@@ -63,19 +67,19 @@ namespace WpfStatus
                     return DateTime.Now.ToString("T");
                 }
 
-                var time = _dateTime - DateTime.Now;
+                var time = _dateTime - DateTime.UtcNow;
                 if (time.TotalDays < 0)
                 {
                     if (IsSelected)
                     {
-                        return _dateTime.ToString("g");
+                        return _dateTime.Add(TimeZoneInfo.Local.BaseUtcOffset).ToString("g");
                     }
                     return $"🏁 {Helper.TimeToDaysString(time.Duration())}";
                 }
 
                 if (IsSelected)
                 {
-                    return _dateTime.ToString("g");
+                    return _dateTime.Add(TimeZoneInfo.Local.BaseUtcOffset).ToString("g");
                 }
 
                 return $"+ {Helper.TimeToDaysString(time)}";

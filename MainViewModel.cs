@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Net.Http;
 using System.Windows;
 using WpfStatus.api;
@@ -83,9 +84,9 @@ namespace WpfStatus
         {
             foreach (var node in Nodes)
             {
-                if ((DateTime.Now - lastUpdateAll).TotalMinutes > 5)
+                if ((DateTime.UtcNow - lastUpdateAll).TotalMinutes > 5)
                 {
-                    lastUpdateAll = DateTime.Now;
+                    lastUpdateAll = DateTime.UtcNow;
                     node.IsUpdateEvents = true;
                     node.IsUpdatePostSetup = true;
                 }
@@ -122,17 +123,18 @@ namespace WpfStatus
 
         async Task UpdateInfo(bool updateRewards = true)
         {
-            var markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
+            var now = DateTime.UtcNow;
+
             var markEpochNumber = 6;
-            var markEpochBegin = DateTime.Parse("2023-10-06 11:00:00+0300");
+            var markEpochBegin = DateTime.Parse("2023-10-06 8:00:00Z", DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AdjustToUniversal);
             var eDurationMs = TimeSpan.FromDays(14);  // 2 weeks
             var official12hOffset = TimeSpan.FromDays(9.5); // -228h
             var official12hOffset2 = TimeSpan.FromDays(10); // +12h
-            var ePassedNum = (int)((DateTime.Now - markEpochBegin) / eDurationMs);
+            var ePassedNum = (int)((now - markEpochBegin) / eDurationMs);
             var eCurrentNum = markEpochNumber + ePassedNum;
             var eCurrentBegin = markEpochBegin.Add(eDurationMs * (eCurrentNum - markEpochNumber));
             var beginEpohLayer = GetLayerByTime(eCurrentBegin);
-            var currentLayer = GetLayerByTime(DateTime.Now);
+            var currentLayer = GetLayerByTime(now);
             var addRewardResults = false;
 
             if (TimeEvents.Count == 0)
@@ -141,18 +143,18 @@ namespace WpfStatus
                 TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡" });
                 TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" });
                 TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" });
-                TimeEvents.Add(new() { DateTime = DateTime.Now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
+                TimeEvents.Add(new() { DateTime = now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
             }
 
             if (updateRewards &&
                 !string.IsNullOrWhiteSpace(appSettings.Coinbase) &&
                 appSettings.Coinbase.StartsWith("sm1qqqqqq") &&
-                (DateTime.Now - lastGettingRewards).TotalMinutes > 2)
+                (now - lastGettingRewards).TotalMinutes > 2)
             {
                 using var client = new HttpClient();
                 var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=200");
                 var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
-                lastGettingRewards = DateTime.Now;
+                lastGettingRewards = now;
                 RewardsList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
                 addRewardResults = true;
             }
@@ -209,7 +211,7 @@ namespace WpfStatus
 
                 foreach (var item in preparedEvents)
                 {
-                    var days = (DateTime.Now - item.DateTime).TotalDays;
+                    var days = (now - item.DateTime).TotalDays;
                     if (days > 0 && days < 0.5)
                     {
                         item.EventType = Enums.TimeEventTypeEnum.CloseReward;

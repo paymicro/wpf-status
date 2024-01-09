@@ -80,7 +80,7 @@ namespace WpfStatus
 
         async Task CheckNotifications()
         {
-            if (!model.IsEnabledNotifications || (DateTime.Now - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
+            if (!model.IsEnabledNotifications || (DateTime.UtcNow - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
             {
                 return;
             }
@@ -92,7 +92,7 @@ namespace WpfStatus
                 {
                     var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is {n.IsOk} | {n.Status}"));
                     await telegram.Send(message);
-                    lastNotification = DateTime.Now;
+                    lastNotification = DateTime.UtcNow;
                 }
             }
         }
@@ -125,8 +125,9 @@ namespace WpfStatus
             if (e.AddedItems.Count != 0 && e.AddedItems[0] is Node node) {
                 model.SelectedNode = node;
 
+                var now = DateTime.UtcNow;
                 var newIndex = false;
-                var eventInFuture = model.TimeEvents.FirstOrDefault(t => t.DateTime > DateTime.Now && t.Desc == node.Name);
+                var eventInFuture = model.TimeEvents.FirstOrDefault(t => t.DateTime > now && t.Desc == node.Name);
                 if (eventInFuture != null)
                 {
                     ListTimeEvents.SelectedItem = eventInFuture;
@@ -134,7 +135,7 @@ namespace WpfStatus
                 }
                 else
                 {
-                    var eventInPast = model.TimeEvents.FirstOrDefault(t => t.DateTime < DateTime.Now && t.Desc == node.Name);
+                    var eventInPast = model.TimeEvents.FirstOrDefault(t => t.DateTime < now && t.Desc == node.Name);
                     if (eventInPast != null)
                     {
                         ListTimeEvents.SelectedItem = eventInPast;
@@ -226,13 +227,13 @@ namespace WpfStatus
             }
         }
 
-        void Action_Click(object sender, RoutedEventArgs e)
+        async void Action_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Control button &&
                 button.Tag is CustomAction customAction &&
                 !string.IsNullOrEmpty(customAction.Script))
             {
-                Helper.RunPowerShell(customAction.Script);
+                await Helper.RunPowerShell(customAction.Script);
             }
         }
     }

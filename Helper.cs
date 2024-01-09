@@ -1,5 +1,6 @@
 ﻿using CliWrap;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
@@ -70,11 +71,11 @@ namespace WpfStatus
 
         readonly static int layerDurationMinutes = 5;
         readonly static int markLayerId = 20500;
-        readonly static DateTime markLayerTime = DateTime.Parse("2023-09-23T15:20:00+0300");
+        readonly static DateTime markLayerTime = DateTime.Parse("2023-09-23T12:20:00Z", DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AdjustToUniversal);
 
         public static int GetLayerByTime(DateTime time)
         {
-            var layersGapMinutes = (time - markLayerTime).TotalMinutes;
+            var layersGapMinutes = (time.ToUniversalTime() - markLayerTime).TotalMinutes;
             var layersDelta = layersGapMinutes / layerDurationMinutes;
             return (int)(markLayerId + layersDelta);
         }
