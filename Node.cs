@@ -7,9 +7,14 @@ namespace WpfStatus
 {
     public class Node : NodeSetting, INotifyPropertyChanged
     {
-        private readonly Helper helper;
+        readonly Helper helper;
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         public Node()
         {
@@ -35,6 +40,8 @@ namespace WpfStatus
             }
         }
 
+        public bool IsReadyForUpdate { get; private set; } = true;
+
         public PostSetupStatus PostSetupStatus { get; set; } = new();
 
         public bool IsUpdatePostSetup { get; set; } = true;
@@ -44,6 +51,10 @@ namespace WpfStatus
         public bool IsUpdateEvents { get; set; } = true;
 
         public List<PeerInfo> PeerInfos { get; set; } = [];
+
+        // TODO: load from app settings
+        // [new CustomAction() { Name = "Test", Script = @"echo 123" }, new CustomAction() { Name = "222", Script = @"echo 222" }];
+        public List<CustomAction> CustomActions { get; set; } = [];
 
         public DateTime LastUpdated { get; set; } = DateTime.MinValue;
 
@@ -85,17 +96,25 @@ namespace WpfStatus
 
         public async Task Update()
         {
+            IsReadyForUpdate = false;
+            OnPropertyChanged(nameof(IsReadyForUpdate));
             Status = await GetStatus();
             OnPropertyChanged(nameof(Status));
             OnPropertyChanged(nameof(IsOk));
             LastUpdated = DateTime.Now;
             OnPropertyChanged(nameof(LastUpdatedStr));
 
-            if (string.IsNullOrEmpty(Status.ConnectedPeers))
+            if (!string.IsNullOrEmpty(Status.ConnectedPeers))
             {
-                return;
+                await DeepUpdate();
             }
+            
+            IsReadyForUpdate = true;
+            OnPropertyChanged(nameof(IsReadyForUpdate));
+        }
 
+        async Task DeepUpdate()
+        {
             if (IsUpdatePostSetup)
             {
                 PostSetupStatus = await GetPostSetupStatus();
@@ -124,12 +143,7 @@ namespace WpfStatus
             OnPropertyChanged(nameof(PeerInfo));
         }
 
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private async Task<Status> GetStatus()
+        async Task<Status> GetStatus()
         {
             var output = await helper.CallGPRC(Host, Port, "spacemesh.v1.NodeService.Status", maxTime: 3);
 
@@ -138,7 +152,7 @@ namespace WpfStatus
                 : Json.Deserialize(output, new { Status = new Status() })?.Status ?? new();
         }
 
-        private async Task<PostSetupStatus> GetPostSetupStatus()
+        async Task<PostSetupStatus> GetPostSetupStatus()
         {
             var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.SmesherService.PostSetupStatus", maxTime: 3);
 
@@ -147,7 +161,7 @@ namespace WpfStatus
                 : Json.Deserialize(output, new { Status = new PostSetupStatus() })?.Status ?? new();
         }
 
-        private async Task<List<Event>> GetEventsStream()
+        async Task<List<Event>> GetEventsStream()
         {
             var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.AdminService.EventsStream", maxTime: 1);
 
@@ -157,7 +171,7 @@ namespace WpfStatus
                 : JsonSerializer.Deserialize<List<Event>>(output, Json.SerializerOptions) ?? [];
         }
 
-        private async Task<List<PeerInfo>> GetPeerInfoStream()
+        async Task<List<PeerInfo>> GetPeerInfoStream()
         {
             var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.AdminService.PeerInfoStream", maxTime: 1);
 

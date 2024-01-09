@@ -32,9 +32,9 @@ namespace WpfStatus
             _ = UpdateInfo();
         }
 
-        int _progressValue;
+        float _progressValue;
 
-        public int ProgressValue
+        public float ProgressValue
         {
             get { return _progressValue; }
             set
@@ -71,7 +71,7 @@ namespace WpfStatus
                 _selectedNode = value;
                 if (value != null)
                 {
-                    UpdatePeerInfosFrom(value);
+                    UpdatePeerInfo();
                 }
                 OnPropertyChanged(nameof(SelectedNode));
             }
@@ -93,10 +93,7 @@ namespace WpfStatus
                 await node.Update();
             }
 
-            if (_selectedNode != null)
-            {
-                UpdatePeerInfosFrom(_selectedNode);
-            }
+            UpdatePeerInfo();
             await UpdateInfo();
             ExportNodeLayer.Save(nodeLayers);
         }
@@ -136,17 +133,17 @@ namespace WpfStatus
             var eCurrentBegin = markEpochBegin.Add(eDurationMs * (eCurrentNum - markEpochNumber));
             var beginEpohLayer = GetLayerByTime(eCurrentBegin);
             var currentLayer = GetLayerByTime(DateTime.Now);
-
-            var events = new List<TimeEvent>
-            {
-                new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}" },
-                new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡"},
-                new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" },
-                new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" },
-                new() { DateTime = DateTime.Now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here },
-            };
-
             var addRewardResults = false;
+
+            if (TimeEvents.Count == 0)
+            {
+                TimeEvents.Add(new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}" });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡" });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" });
+                TimeEvents.Add(new() { DateTime = DateTime.Now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
+            }
+
             if (updateRewards &&
                 !string.IsNullOrWhiteSpace(appSettings.Coinbase) &&
                 appSettings.Coinbase.StartsWith("sm1qqqqqq") &&
@@ -203,33 +200,33 @@ namespace WpfStatus
                         e.RewardVisible = Visibility.Visible;
                     }
                 }
-                events.AddRange(preparedEvents);
-            }
 
-            var eventsStr = events.Select(e =>
-                (e.DateTime - DateTime.Now).TotalHours.ToString("0.0") + "h" +
-                Environment.NewLine + e.Desc);
-
-            var selectedEvent = TimeEvents.FirstOrDefault(e => e.IsSelected);
-            var newSelectedEvent = events.FirstOrDefault(e => e.Layer == selectedEvent?.Layer);
-            if (newSelectedEvent != null)
-            {
-                newSelectedEvent.IsSelected = true;
-            }
-
-            events.Sort();
-            TimeEvents.Clear();
-            foreach (var e in events)
-            {
-                if (e.EventType == Enums.TimeEventTypeEnum.Reward)
+                var rewardTypes = new List<Enums.TimeEventTypeEnum>()
                 {
-                    var days = (e.DateTime - DateTime.Now).TotalDays;
+                    Enums.TimeEventTypeEnum.Reward,
+                    Enums.TimeEventTypeEnum.CloseReward
+                };
+
+                foreach (var item in preparedEvents)
+                {
+                    var days = (DateTime.Now - item.DateTime).TotalDays;
                     if (days > 0 && days < 0.5)
                     {
-                        e.EventType = Enums.TimeEventTypeEnum.CloseReward;
+                        item.EventType = Enums.TimeEventTypeEnum.CloseReward;
+                    }
+
+                    var contains = TimeEvents.FirstOrDefault(e => e.Layer == item.Layer
+                        && rewardTypes.Contains(e.EventType)
+                        && e.Desc == item.Desc);
+                    if (contains != default)
+                    {
+                        contains.UpdateVarProps(item);
+                    }
+                    else
+                    {
+                        TimeEvents.Add(item);
                     }
                 }
-                TimeEvents.Add(e);
             }
         }
 
@@ -240,16 +237,21 @@ namespace WpfStatus
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        void UpdatePeerInfosFrom(Node node)
+        public void UpdatePeerInfo()
         {
+            if (_selectedNode == null)
+            {
+                return;
+            }
+
             PeerInfos.Clear();
-            foreach (var item in node.PeerInfos)
+            foreach (var item in _selectedNode.PeerInfos)
             {
                 PeerInfos.Add(item);
             }
 
             Events.Clear();
-            foreach (var item in node.Events)
+            foreach (var item in _selectedNode.Events)
             {
                 Events.Add(item);
             }

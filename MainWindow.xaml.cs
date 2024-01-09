@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Threading;
 using WpfStatus.Notification;
 
 namespace WpfStatus
@@ -12,9 +13,8 @@ namespace WpfStatus
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
-        Timer? timer;
+        DispatcherTimer? timer;
         readonly AppSettings appSettings;
-        readonly SynchronizationContext? uiContext;
         int timerProgress = 0;
         readonly MainViewModel model;
 
@@ -28,7 +28,6 @@ namespace WpfStatus
         {
             appSettings = AppSettings.LoadSettings();
             model = new MainViewModel(appSettings);
-            uiContext = SynchronizationContext.Current;
             InitializeComponent();
 
             DataContext = model;
@@ -40,37 +39,38 @@ namespace WpfStatus
 
         void StartTimer(int period = 30_000)
         {
-            timer = new Timer(_ =>
-            {
-                timerProgress += 500;
-                model.ProgressValue = 100 * timerProgress / period;
-                if (timerProgress > period)
+            StopTimer();
+            timer = new DispatcherTimer(
+                TimeSpan.FromMilliseconds(50),
+                DispatcherPriority.DataBind,
+                (s, e) =>
                 {
-                    timerProgress = 0;
-                    uiContext?.Send(x =>
+                    timerProgress += 50;
+                    model.ProgressValue = 100f * timerProgress / period;
+                    if (timerProgress > period)
                     {
+                        timerProgress = 0;
                         UpdateAll_Click(this, new RoutedEventArgs());
-                    }, null);
-                }
-            }, null, 0, 500);
+                    }
+                },
+                Dispatcher.CurrentDispatcher);
         }
 
         void StopTimer()
         {
             model.ProgressValue = 0;
             timerProgress = 0;
-            timer?.Dispose();
+            timer?.Stop();
         }
 
         async void Update_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is Node node)
             {
-                button.IsEnabled = false;
                 node.IsUpdateEvents = true;
+                node.IsUpdatePostSetup = true;
                 await node.Update();
-                model.SelectedNode = node;
-                button.IsEnabled = true;
+                model.UpdatePeerInfo();
             }
             else
             {
@@ -116,7 +116,6 @@ namespace WpfStatus
         protected override void OnClosed(EventArgs e)
         {
             // AppSettings.SaveSettings(appSettings);
-            timer?.Dispose();
             telegram?.Dispose();
             base.OnClosed(e);
         }
@@ -224,6 +223,16 @@ namespace WpfStatus
                         break;
                     }
                 }
+            }
+        }
+
+        void Action_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Control button &&
+                button.Tag is CustomAction customAction &&
+                !string.IsNullOrEmpty(customAction.Script))
+            {
+                Helper.RunPowerShell(customAction.Script);
             }
         }
     }

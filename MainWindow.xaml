@@ -1,18 +1,26 @@
-﻿<Controls:MetroWindow x:Class="WpfStatus.MainWindow"
+﻿<Controls:MetroWindow
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
-        xmlns:options="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
-        xmlns:local="clr-namespace:WpfStatus" d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:local="clr-namespace:WpfStatus" xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Class="WpfStatus.MainWindow"
+        d:DataContext="{d:DesignInstance Type={x:Type local:MainViewModel}}"
         mc:Ignorable="d"
         Title="{Binding MainWindowTitle}" Height="600" Width="1120" FontSize="14" FontFamily="Cascadia Code" >
-    <Window.Resources>
+    <Controls:MetroWindow.Resources>
         <ResourceDictionary>
-            <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
+            <CollectionViewSource x:Key='timeEventsSorted' Source="{Binding TimeEvents}" IsLiveSortingRequested="True">
+                <CollectionViewSource.SortDescriptions>
+                    <scm:SortDescription PropertyName="Layer" />
+                </CollectionViewSource.SortDescriptions>
+                <CollectionViewSource.LiveSortingProperties>
+                    <System:String>Layer</System:String>
+                </CollectionViewSource.LiveSortingProperties>
+            </CollectionViewSource>
         </ResourceDictionary>
-    </Window.Resources>
+    </Controls:MetroWindow.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="250" MinHeight="50"/>
@@ -25,7 +33,7 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="180"/>
         </Grid.ColumnDefinitions>
-        <ListView x:Name="List" Margin="10,10,10,10" d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Nodes}" SelectionChanged="List_SelectionChanged" GridViewColumnHeader.Click="GridViewColumnHeaderClickedHandler">
+        <ListView x:Name="List" Margin="10,10,10,10" d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Nodes}" SelectionChanged="List_SelectionChanged" ButtonBase.Click="GridViewColumnHeaderClickedHandler">
             <ListView.Resources>
                 <Style BasedOn="{StaticResource MahApps.Styles.ListViewItem}" TargetType="{x:Type ListViewItem}">
                     <Style.Triggers>
@@ -37,6 +45,27 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
+                <DataTemplate x:Key="comboBoxTemplate">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Margin="1" ToolTip="Full update" Click="Update_Click" IsEnabled="{Binding IsReadyForUpdate}" >
+                            <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE117;" FontSize="16" />
+                        </Button>
+                        <ItemsControl ItemsSource="{Binding CustomActions}" d:ItemsSource="{d:SampleData ItemCount=0}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="1" ToolTip="{Binding Name}" Click="Action_Click" Tag="{Binding}">
+                                        <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="{Binding Gliph}" FontSize="16" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </DataTemplate>
             </ListView.Resources>
             <ListView.View>
                 <GridView>
@@ -51,13 +80,7 @@
                     <GridViewColumn Header="Dir" Width="50" DisplayMemberBinding="{Binding PostSetupStatus.Opts.DataDir}" />
                     <GridViewColumn Header="Rewards" Width="100" DisplayMemberBinding="{Binding Rewards}" />
                     <GridViewColumn Header="Next" Width="90" DisplayMemberBinding="{Binding TimeToNextReward}" />
-                    <GridViewColumn Header="Update" Width="60" >
-                        <GridViewColumn.CellTemplate>
-                            <DataTemplate>
-                                <Button Content="▶" Click="Update_Click" />
-                            </DataTemplate>
-                        </GridViewColumn.CellTemplate>
-                    </GridViewColumn>
+                    <GridViewColumn Header="Action" x:Name="action" Width="100" CellTemplate="{StaticResource comboBoxTemplate}" />
                     <GridViewColumn Header="Time upd" Width="75" DisplayMemberBinding="{Binding LastUpdatedStr}" />
                 </GridView>
             </ListView.View>
@@ -67,9 +90,7 @@
             <TabControl>
                 <TabItem Header="Peers">
                     <DataGrid d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding PeerInfos}"
-                              AutoGenerateColumns="False" 
-                              IsReadOnly="True"
-                              IsManipulationEnabled="False">
+                              AutoGenerateColumns="False" IsReadOnly="True" IsManipulationEnabled="False" ScrollViewer.CanContentScroll="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*" />
                             <DataGridTextColumn Header="Address" Binding="{Binding Connections[0].Address}" Width="*" />
@@ -86,9 +107,7 @@
                 </TabItem>
                 <TabItem Header="Events">
                     <DataGrid d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Events}"
-                          AutoGenerateColumns="False" 
-                          IsReadOnly="True"
-                          IsManipulationEnabled="False">
+                          AutoGenerateColumns="False" IsReadOnly="True" IsManipulationEnabled="False" ScrollViewer.CanContentScroll="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="110" SortDirection="Descending" />
                             <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="*" />
@@ -103,49 +122,31 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </TabItem>
+                <TabItem Header="Output">
+                    <TextBox Text="asd"/>
+                </TabItem>
             </TabControl>
         </Grid>
         <Grid Grid.Row="3" Grid.ColumnSpan="3">
             <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
-            <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom"/>
+            <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom" SmallChange="0.01"/>
             <StackPanel Orientation="Horizontal" Margin="10,0,0,24" VerticalAlignment="Bottom">
                 <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Margin="0,0,16,0" HorizontalAlignment="Left" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" />
                 <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="0,0,16,0" HorizontalAlignment="Left"/>
             </StackPanel>
         </Grid>
         <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
-        <ListBox x:Name="ListTimeEvents" Grid.Column="2" Margin="0,0,0,0" Grid.RowSpan="3" ItemsSource="{Binding TimeEvents}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged">
-            <ListBox.Resources>
-                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Red" />
-                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Green" />
-            </ListBox.Resources>
-            <ListBox.Style>
-                <Style TargetType="ListBox" BasedOn="{StaticResource {x:Type ListBox}}">
-                    <Style.Triggers>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="Yellow" />
-                            <Setter Property="Background" Value="Yellow" />
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </ListBox.Style>
+        <ListBox x:Name="ListTimeEvents" Grid.Column="2" Grid.RowSpan="3" ScrollViewer.CanContentScroll="False" Margin="0,0,0,0"
+                 ItemsSource="{Binding Source={StaticResource timeEventsSorted}}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged">
             <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                    <Style.Resources>
-                        <SolidColorBrush x:Key='{x:Static SystemColors.HighlightBrushKey}' Color='White'/>
-                        <SolidColorBrush x:Key='{x:Static SystemColors.HighlightTextBrushKey}' Color='Black'/>
-                        <SolidColorBrush x:Key='{x:Static SystemColors.ControlBrushKey}' Color='White'/>
-                    </Style.Resources>
+                <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                     <Setter Property="Background" Value="Gray" />
-                    <Setter Property="Foreground" Value="Black" />
+                    <Setter Property="Foreground" Value="#30808080" />
                     <Setter Property="Margin" Value="5,2"/>
                     <Setter Property="Padding" Value="2"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True" >
-                            <Setter Property="Foreground" Value="White" />
-                            <Setter Property="Background" Value="AliceBlue" />
-                            <Setter Property="Margin" Value="5,2" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
@@ -166,6 +167,7 @@
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
+                            <Setter Property="Margin" Value="5,2" />
                         </Trigger>
                         <DataTrigger Binding="{Binding EventType}" Value="Here">
                             <Setter Property="Background" Value="#00FFFFFF" />
@@ -176,19 +178,22 @@
                             <Setter Property="IsEnabled" Value="False"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EventType}" Value="CloseReward">
-                            <Setter Property="Background" Value="DeepSkyBlue" />
+                            <Setter Property="Background" Value="Goldenrod" />
+                            <Setter Property="Foreground" Value="Black" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EventType}" Value="Reward">
-                            <Setter Property="Background" Value="SkyBlue" />
+                            <Setter Property="Background" Value="Goldenrod" />
+                            <Setter Property="Foreground" Value="Black" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding EventType}" Value="None">
-                            <Setter Property="Foreground" Value="Ivory" />
+                            <Setter Property="Foreground" Value="#90FFFFF0" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding RewardVisible}" Value="0">
-                            <Setter Property="Background" Value="LightGreen" />
+                            <Setter Property="Background" Value="#33909090" />
+                            <Setter Property="Foreground" Value="#33FFFFFF" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding RewardStr}" Value="❌">
-                            <Setter Property="Background" Value="LightSalmon" />
+                            <Setter Property="Background" Value="#33FFA07A" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

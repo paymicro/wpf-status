@@ -1,28 +1,32 @@
 ﻿using System.ComponentModel;
 using System.Windows;
+using System.Windows.Threading;
 using WpfStatus.Enums;
 
 namespace WpfStatus
 {
-    public class TimeEvent : IComparable<TimeEvent>, INotifyPropertyChanged, IDisposable
+    public class TimeEvent : IComparable<TimeEvent>, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-
-        readonly Timer timer;
+        readonly DispatcherTimer timer;
 
         public TimeEvent() {
-            timer = new (_ =>
-            {
-                if (EventType == TimeEventTypeEnum.Here)
+            timer = new DispatcherTimer(
+                TimeSpan.FromSeconds(1),
+                DispatcherPriority.Normal,
+                (s, e) =>
                 {
-                    DateTime = DateTime.Now;
-                    OnPropertyChanged(nameof(Layer));
-                }
-                else
-                {
-                    OnPropertyChanged(nameof(InDays));
-                }
-            }, null, 0, 5000);
+                    if (EventType == TimeEventTypeEnum.Here)
+                    {
+                        DateTime = DateTime.Now;
+                        OnPropertyChanged(nameof(Layer));
+                    }
+                    else
+                    {
+                        OnPropertyChanged(nameof(InDays));
+                    }
+                },
+                Dispatcher.CurrentDispatcher);
         }
 
         bool _isSelected = false;
@@ -110,14 +114,15 @@ namespace WpfStatus
 
         public int CompareTo(TimeEvent? other) => DateTime.CompareTo(other?.DateTime);
 
+        public void UpdateVarProps(TimeEvent other)
+        {
+            _rewardStr = other.RewardStr;
+            RewardVisible = other.RewardVisible;
+        }
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void Dispose()
-        {
-            timer.Dispose();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using CliWrap;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
@@ -101,6 +102,13 @@ namespace WpfStatus
                     exe?.ExtractToFile(exe.FullName);
                 }
             }
+        }
+
+        public static async Task RunPowerShell(string pathToScript)
+        {
+            var cmd = await Cli.Wrap("powershell")
+                .WithWorkingDirectory(System.IO.Path.GetDirectoryName(pathToScript) ?? "")
+                .WithArguments(new[] { pathToScript }).ExecuteAsync();
         }
     }
 }
