@@ -1,9 +1,9 @@
-## Status window for Windows on WPF
+# Windows-only status window for spacemesh nodes
 ![image](https://github.com/paymicro/wpf-status/assets/27482193/af7f7fd0-fab5-4ed0-8be9-5d56c6af99fb)
 
-## Notification
+## Notifications
 ### Telegram
-Login as a regular user (not a bot). This user should have a dialog with your primary user who will receive notifications.
+Login as a regular user. This user should have a dialog with your primary user who will receive notifications.
 
 To enable it, you need to fill in the settings.json file your `telegramApiHash` and  `telegramApiId` from the user who will send the notifications. That you obtain through [Telegram's API development tools](https://my.telegram.org/apps) page.
 
