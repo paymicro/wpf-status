@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net.Http;
 using System.Windows;
 using WpfStatus.api;
+using WpfStatus.Notification;
 using static WpfStatus.Helper;
 
 namespace WpfStatus
@@ -12,6 +13,9 @@ namespace WpfStatus
     {
         readonly AppSettings appSettings;
         readonly List<ExportNodeLayer> nodeLayers;
+
+        DateTime lastNotification = DateTime.MinValue;
+        readonly Telegram? telegram;
 
         public MainViewModel(AppSettings appSettings)
         {
@@ -30,6 +34,10 @@ namespace WpfStatus
             IsAutoUpdate = appSettings.IsTimerEnabled;
             IsEnabledNotifications = appSettings.NotificationSettings.Enabled;
             nodeLayers = ExportNodeLayer.Load();
+            if (appSettings.NotificationSettings.TelegramApiId != 0 && !string.IsNullOrEmpty(appSettings.NotificationSettings.TelegramApiHash))
+            {
+                telegram = new Telegram(appSettings.NotificationSettings);
+            }
             _ = UpdateInfo();
         }
 
@@ -97,6 +105,16 @@ namespace WpfStatus
             UpdatePeerInfo();
             await UpdateInfo();
             ExportNodeLayer.Save(nodeLayers);
+
+            if (IsEnabledNotifications)
+            {
+                var invalidNodes = Nodes.Where(n => n.IsOk != "✔");
+                if (invalidNodes.Any())
+                {
+                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is {n.IsOk} | {n.Status}"));
+                    await SendNotification(message);
+                }
+            }
         }
 
         List<RewardEntity> RewardsList = [];
@@ -121,7 +139,29 @@ namespace WpfStatus
             }
         }
 
-        async Task UpdateInfo(bool updateRewards = true)
+        public async Task SendNotification(string message)
+        {
+            if (!IsEnabledNotifications || (DateTime.UtcNow - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
+            {
+                return;
+            }
+
+            if (telegram != null)
+            {
+                await telegram.Send(message);
+                lastNotification = DateTime.UtcNow;
+            }
+        }
+
+        string GetCoinBase()
+        {
+            appSettings.Coinbase = (!string.IsNullOrWhiteSpace(appSettings.Coinbase) && appSettings.Coinbase.StartsWith("sm1qqqqqq"))
+                ? appSettings.Coinbase
+                : Nodes.FirstOrDefault(n => n.Coinbase.StartsWith("sm1qqqqqq"))?.Coinbase ?? string.Empty;
+            return appSettings.Coinbase;
+        }
+
+        async Task UpdateInfo()
         {
             var now = DateTime.UtcNow;
 
@@ -139,24 +179,33 @@ namespace WpfStatus
 
             if (TimeEvents.Count == 0)
             {
-                TimeEvents.Add(new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}" });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"⚡ PoST Begin ⚡" });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"🚧 PoST End 🚧" });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End" });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}", Level = -1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"PoST Begin", Level = 1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"PoST End", Level = 1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End", Level = -1 });
                 TimeEvents.Add(new() { DateTime = now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
             }
 
-            if (updateRewards &&
-                !string.IsNullOrWhiteSpace(appSettings.Coinbase) &&
-                appSettings.Coinbase.StartsWith("sm1qqqqqq") &&
-                (now - lastGettingRewards).TotalMinutes > 2)
+            if (!string.IsNullOrWhiteSpace(GetCoinBase()) &&
+                (now - lastGettingRewards).TotalSeconds > 10)
             {
                 using var client = new HttpClient();
                 var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=200");
                 var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
-                lastGettingRewards = now;
-                RewardsList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                var lastRewardList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                var diff = lastRewardList.Count - RewardsList.Count;
+                if (diff > 0 && lastGettingRewards > DateTime.MinValue)
+                {
+                    var message = $"Reward:";
+                    for (var i = 0; i < diff; i++)
+                    {
+                        message += $"{Environment.NewLine} +{Math.Round(lastRewardList[i].Total / 1000_000_000d, 3)}";
+                    }
+                    await SendNotification(message);
+                }
+                RewardsList = lastRewardList;
                 addRewardResults = true;
+                lastGettingRewards = now;
             }
 
             foreach (var node in Nodes)

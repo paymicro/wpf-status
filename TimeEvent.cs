@@ -10,7 +10,8 @@ namespace WpfStatus
         public event PropertyChangedEventHandler? PropertyChanged;
         readonly DispatcherTimer timer;
 
-        public TimeEvent() {
+        public TimeEvent()
+        {
             timer = new DispatcherTimer(
                 TimeSpan.FromSeconds(1),
                 DispatcherPriority.Normal,
@@ -31,7 +32,8 @@ namespace WpfStatus
 
         bool _isSelected = false;
 
-        public bool IsSelected {
+        public bool IsSelected
+        {
             get => _isSelected;
             set
             {
@@ -40,6 +42,8 @@ namespace WpfStatus
                 OnPropertyChanged(nameof(InDays));
             }
         }
+
+        public int Level { get; set; } = 0;
 
         DateTime _dateTime;
 
@@ -74,7 +78,7 @@ namespace WpfStatus
                     {
                         return _dateTime.Add(TimeZoneInfo.Local.BaseUtcOffset).ToString("g");
                     }
-                    return $"🏁 {Helper.TimeToDaysString(time.Duration())}";
+                    return $"- {Helper.TimeToDaysString(time.Duration())}";
                 }
 
                 if (IsSelected)
@@ -112,7 +116,17 @@ namespace WpfStatus
             }
         }
 
-        public Visibility RewardVisible { get; set; } = Visibility.Collapsed;
+        Visibility _rewardVisible = Visibility.Collapsed;
+
+        public Visibility RewardVisible
+        {
+            get => _rewardVisible;
+            set
+            {
+                _rewardVisible = value;
+                OnPropertyChanged(nameof(RewardVisible));
+            }
+        }
 
         public TimeEventTypeEnum EventType { get; set; } = TimeEventTypeEnum.None;
 

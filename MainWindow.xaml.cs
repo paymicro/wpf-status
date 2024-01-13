@@ -18,9 +18,6 @@ namespace WpfStatus
         int timerProgress = 0;
         readonly MainViewModel model;
 
-        DateTime lastNotification = DateTime.MinValue;
-        readonly Telegram? telegram;
-
         GridViewColumnHeader? _lastHeaderClicked;
         ListSortDirection _lastDirection = ListSortDirection.Ascending;
 
@@ -31,10 +28,6 @@ namespace WpfStatus
             InitializeComponent();
 
             DataContext = model;
-            if (appSettings.NotificationSettings.TelegramApiId != 0 && !string.IsNullOrEmpty(appSettings.NotificationSettings.TelegramApiHash))
-            {
-                telegram = new Telegram(appSettings.NotificationSettings);
-            }
         }
 
         void StartTimer(int period = 30_000)
@@ -78,29 +71,9 @@ namespace WpfStatus
             }
         }
 
-        async Task CheckNotifications()
-        {
-            if (!model.IsEnabledNotifications || (DateTime.UtcNow - lastNotification).TotalSeconds < appSettings.NotificationSettings.DalaySec)
-            {
-                return;
-            }
-
-            if (telegram != null)
-            {
-                var invalidNodes = model.Nodes.Where(n => n.IsOk != "✔");
-                if (invalidNodes.Any())
-                {
-                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is {n.IsOk} | {n.Status}"));
-                    await telegram.Send(message);
-                    lastNotification = DateTime.UtcNow;
-                }
-            }
-        }
-
         async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
             await model.UpdateAllNodes();
-            await CheckNotifications();
         }
 
         void AutoUpdate_Checked(object sender, RoutedEventArgs e)
@@ -116,7 +89,6 @@ namespace WpfStatus
         protected override void OnClosed(EventArgs e)
         {
             // AppSettings.SaveSettings(appSettings);
-            telegram?.Dispose();
             base.OnClosed(e);
         }
 

@@ -94,6 +94,8 @@ namespace WpfStatus
             }
         }
 
+        public string Coinbase { get; private set; } = string.Empty;
+
         public async Task Update()
         {
             IsReadyForUpdate = false;
@@ -103,6 +105,12 @@ namespace WpfStatus
             OnPropertyChanged(nameof(IsOk));
             LastUpdated = DateTime.Now;
             OnPropertyChanged(nameof(LastUpdatedStr));
+
+            if (string.IsNullOrEmpty(Coinbase))
+            {
+                Coinbase = await GetCoinbase();
+                OnPropertyChanged(nameof(Coinbase));
+            }
 
             if (!string.IsNullOrEmpty(Status.ConnectedPeers))
             {
@@ -159,6 +167,15 @@ namespace WpfStatus
             return string.IsNullOrEmpty(output)
                 ? new()
                 : Json.Deserialize(output, new { Status = new PostSetupStatus() })?.Status ?? new();
+        }
+
+        async Task<string> GetCoinbase()
+        {
+            var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.SmesherService.Coinbase", maxTime: 3);
+            var address = string.IsNullOrEmpty(output)
+                ? string.Empty
+                : Json.Deserialize(output, new { AccountId = new { Address = "" } })?.AccountId?.Address ?? string.Empty;
+            return address;
         }
 
         async Task<List<Event>> GetEventsStream()

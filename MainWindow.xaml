@@ -8,7 +8,7 @@
         xmlns:local="clr-namespace:WpfStatus" xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Class="WpfStatus.MainWindow"
         d:DataContext="{d:DesignInstance Type={x:Type local:MainViewModel}}"
         mc:Ignorable="d"
-        Title="{Binding MainWindowTitle}" Height="500" Width="1150" FontSize="14" FontFamily="Cascadia Code" >
+        Title="{Binding MainWindowTitle}" Height="500" Width="1150" FontSize="14" >
     <Controls:MetroWindow.Resources>
         <ResourceDictionary>
             <CollectionViewSource x:Key='timeEventsSorted' Source="{Binding TimeEvents}" IsLiveSortingRequested="True">
@@ -19,6 +19,7 @@
                     <System:String>Layer</System:String>
                 </CollectionViewSource.LiveSortingProperties>
             </CollectionViewSource>
+            <local:MarginLevelConverter x:Key="MarginLevelConverter"/>
         </ResourceDictionary>
     </Controls:MetroWindow.Resources>
     <Grid>
@@ -94,7 +95,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*" />
                             <DataGridTextColumn Header="Address" Binding="{Binding Connections[0].Address}" Width="*" />
-                            <DataGridTextColumn Header="Uptime" Binding="{Binding Connections[0].UptimeSec}" Width="90" TextBlock.TextAlignment="Center">
+                            <DataGridTextColumn Header="Uptime" Binding="{Binding Connections[0].Uptime}" Width="90" TextBlock.TextAlignment="Center">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style>
                                         <Setter Property="TextBlock.TextAlignment" Value="Right"/>
@@ -135,36 +136,49 @@
         <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
         <ListBox x:Name="ListTimeEvents" Grid.Column="2" Grid.RowSpan="3" ScrollViewer.CanContentScroll="False" Margin="0,0,0,0"
                  ItemsSource="{Binding Source={StaticResource timeEventsSorted}}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged">
-            <ListBox.ItemContainerStyle>
+            <ListBox.Resources>
                 <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                    <!--<Style.Resources>
+                        <Storyboard x:Key="OnSelectStoryboard">
+                            <DoubleAnimation
+                                Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                From="0" To="-20" Duration="0:0:2" />
+                        </Storyboard>
+                    </Style.Resources>-->
                     <Setter Property="Background" Value="Gray" />
                     <Setter Property="Foreground" Value="#30808080" />
-                    <Setter Property="Margin" Value="5,2"/>
+                    <Setter Property="Margin" Value="{Binding Level, Converter={StaticResource MarginLevelConverter}}"/>
                     <Setter Property="Padding" Value="2"/>
                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <TransformGroup>
+                                <SkewTransform AngleX="0" AngleY="0"/>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </TransformGroup>
+                        </Setter.Value>
+                    </Setter>
                     <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True" >
+                        <Trigger Property="IsSelected" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00" Value="5,2" />
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00.200" Value="10,8,5,0" />
-                                        </ThicknessAnimationUsingKeyFrames>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].AngleX" To="-3" Duration="0:0:.2" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleX" To="1.1" Duration="0:0:.2" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleY" To="1.1" Duration="0:0:.2" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ThicknessAnimationUsingKeyFrames Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00" Value="10,8,5,0" />
-                                            <SplineThicknessKeyFrame KeyTime="00:00:00.100" Value="5,2" />
-                                        </ThicknessAnimationUsingKeyFrames>
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].AngleX" To="0.0" Duration="0:0:.1" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleX" To="1" Duration="0:0:.1" />
+                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleY" To="1" Duration="0:0:.1" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
-                            <Setter Property="Margin" Value="5,2" />
                         </Trigger>
                         <DataTrigger Binding="{Binding EventType}" Value="Here">
                             <Setter Property="Background" Value="#00FFFFFF" />
@@ -191,10 +205,10 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </ListBox.ItemContainerStyle>
+            </ListBox.Resources>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Margin="0,2,0,2">
+                    <StackPanel Margin="0,2,0,2" RenderTransformOrigin="0.5,0.5">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right"
