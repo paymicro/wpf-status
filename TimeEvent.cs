@@ -111,8 +111,12 @@ namespace WpfStatus
             get => _rewardStr;
             set
             {
+                var isChanged = _rewardStr != value;
                 _rewardStr = value;
-                OnPropertyChanged(nameof(RewardStr));
+                if (isChanged)
+                {
+                    OnPropertyChanged(nameof(RewardStr));
+                }
             }
         }
 
@@ -123,8 +127,12 @@ namespace WpfStatus
             get => _rewardVisible;
             set
             {
+                var isChanged = _rewardVisible != value;
                 _rewardVisible = value;
-                OnPropertyChanged(nameof(RewardVisible));
+                if (isChanged)
+                {
+                    OnPropertyChanged(nameof(RewardVisible));
+                }
             }
         }
 
@@ -134,7 +142,7 @@ namespace WpfStatus
 
         public void UpdateVarProps(TimeEvent other)
         {
-            _rewardStr = other.RewardStr;
+            RewardStr = other.RewardStr;
             RewardVisible = other.RewardVisible;
         }
 

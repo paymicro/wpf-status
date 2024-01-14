@@ -8,7 +8,7 @@
         xmlns:local="clr-namespace:WpfStatus" xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Class="WpfStatus.MainWindow"
         d:DataContext="{d:DesignInstance Type={x:Type local:MainViewModel}}"
         mc:Ignorable="d"
-        Title="{Binding MainWindowTitle}" Height="500" Width="1150" FontSize="14" >
+        Title="{Binding MainWindowTitle}" Height="500" Width="980" FontSize="14" >
     <Controls:MetroWindow.Resources>
         <ResourceDictionary>
             <CollectionViewSource x:Key='timeEventsSorted' Source="{Binding TimeEvents}" IsLiveSortingRequested="True">
@@ -27,13 +27,8 @@
             <RowDefinition Height="250*" MinHeight="50"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="170"/>
-            <RowDefinition Height="50" MinHeight="50"/>
+            <RowDefinition Height="40" MinHeight="40"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200*" MinWidth="200"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="180"/>
-        </Grid.ColumnDefinitions>
         <ListView x:Name="List" Margin="10,10,10,10" d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding Nodes}" SelectionChanged="List_SelectionChanged" ButtonBase.Click="GridViewColumnHeaderClickedHandler">
             <ListView.Resources>
                 <Style BasedOn="{StaticResource MahApps.Styles.ListViewItem}" TargetType="{x:Type ListViewItem}">
@@ -42,7 +37,7 @@
                             <Setter Property="Background" Value="DarkRed" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsOk}" Value="Offline">
-                            <Setter Property="Background" Value="Gray" />
+                            <Setter Property="Background" Value="#4C808080" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -89,6 +84,63 @@
         <GridSplitter Grid.Row="1" Height="4" VerticalAlignment="Center" ShowsPreview="False" />
         <Grid Grid.Row="2">
             <TabControl>
+                <TabItem Header="Timemap">
+                    <ListBox x:Name="ListTimeEvents" ScrollViewer.CanContentScroll="False" Margin="8,0,8,0" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                        ItemsSource="{Binding Source={StaticResource timeEventsSorted}}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged" RenderTransformOrigin="0.5,0.5">
+                        <ListBox.Resources>
+                            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Background" Value="Gray" />
+                                <Setter Property="Foreground" Value="#30808080" />
+                                <Setter Property="Margin" Value="6,2"/>
+                                <Setter Property="Padding" Value="8,2"/>
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding EventType}" Value="Here">
+                                        <Setter Property="Background" Value="#00FFFFFF" />
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="BorderBrush" Value="Goldenrod"/>
+                                        <Setter Property="Margin" Value="10,10"/>
+                                        <Setter Property="Padding" Value="5"/>
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding EventType}" Value="CloseReward">
+                                        <Setter Property="Background" Value="Goldenrod" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding EventType}" Value="Reward">
+                                        <Setter Property="StackPanel.Background" Value="Goldenrod" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding EventType}" Value="None">
+                                        <Setter Property="Foreground" Value="#90FFFFF0" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding RewardVisible}" Value="0">
+                                        <Setter Property="Background" Value="#33909090" />
+                                        <Setter Property="Foreground" Value="#33FFFFFF" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.Resources>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,2,0,2" RenderTransformOrigin="0.5,0.5">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right"
+                                            Background="#4C000000" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel IsItemsHost="True" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </TabItem>
                 <TabItem Header="Peers">
                     <DataGrid d:ItemsSource="{d:SampleData ItemCount=5}" ItemsSource="{Binding PeerInfos}"
                               AutoGenerateColumns="False" IsReadOnly="True" IsManipulationEnabled="False" ScrollViewer.CanContentScroll="False">
@@ -125,100 +177,13 @@
                 </TabItem>
             </TabControl>
         </Grid>
-        <Grid Grid.Row="3" Grid.ColumnSpan="3">
-            <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
-            <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="10,0,131,10" Height="10" VerticalAlignment="Bottom" SmallChange="0.01"/>
-            <StackPanel Orientation="Horizontal" Margin="10,0,0,24" VerticalAlignment="Bottom">
-                <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Margin="0,0,16,0" HorizontalAlignment="Left" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" />
-                <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="0,0,16,0" HorizontalAlignment="Left"/>
+        <Grid Grid.Row="3">
+            <StackPanel Orientation="Horizontal" Margin="10,8,0,0" VerticalAlignment="Top" Height="27">
+                <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" />
+                <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="20,0,16,0" HorizontalAlignment="Left"/>
             </StackPanel>
+            <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="0,0,131,0" SmallChange="0.01" VerticalAlignment="Center" Height="20" HorizontalAlignment="Right" Width="150"/>
+            <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
         </Grid>
-        <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" ShowsPreview="False" />
-        <ListBox x:Name="ListTimeEvents" Grid.Column="2" Grid.RowSpan="3" ScrollViewer.CanContentScroll="False" Margin="0,0,0,0"
-                 ItemsSource="{Binding Source={StaticResource timeEventsSorted}}" d:ItemsSource="{d:SampleData}" SelectionChanged="ListTimeEvents_SelectionChanged">
-            <ListBox.Resources>
-                <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                    <!--<Style.Resources>
-                        <Storyboard x:Key="OnSelectStoryboard">
-                            <DoubleAnimation
-                                Storyboard.TargetProperty="RenderTransform.ScaleX"
-                                From="0" To="-20" Duration="0:0:2" />
-                        </Storyboard>
-                    </Style.Resources>-->
-                    <Setter Property="Background" Value="Gray" />
-                    <Setter Property="Foreground" Value="#30808080" />
-                    <Setter Property="Margin" Value="{Binding Level, Converter={StaticResource MarginLevelConverter}}"/>
-                    <Setter Property="Padding" Value="2"/>
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                    <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-                    <Setter Property="RenderTransform">
-                        <Setter.Value>
-                            <TransformGroup>
-                                <SkewTransform AngleX="0" AngleY="0"/>
-                                <ScaleTransform ScaleX="1" ScaleY="1"/>
-                            </TransformGroup>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].AngleX" To="-3" Duration="0:0:.2" />
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleX" To="1.1" Duration="0:0:.2" />
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleY" To="1.1" Duration="0:0:.2" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[0].AngleX" To="0.0" Duration="0:0:.1" />
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleX" To="1" Duration="0:0:.1" />
-                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Children[1].ScaleY" To="1" Duration="0:0:.1" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
-                        <DataTrigger Binding="{Binding EventType}" Value="Here">
-                            <Setter Property="Background" Value="#00FFFFFF" />
-                            <Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="BorderBrush" Value="Goldenrod"/>
-                            <Setter Property="Margin" Value="10,10"/>
-                            <Setter Property="Padding" Value="5"/>
-                            <Setter Property="IsEnabled" Value="False"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding EventType}" Value="CloseReward">
-                            <Setter Property="Background" Value="Goldenrod" />
-                            <Setter Property="Foreground" Value="Black" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding EventType}" Value="Reward">
-                            <Setter Property="StackPanel.Background" Value="Goldenrod" />
-                            <Setter Property="Foreground" Value="Black" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding EventType}" Value="None">
-                            <Setter Property="Foreground" Value="#90FFFFF0" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding RewardVisible}" Value="0">
-                            <Setter Property="Background" Value="#33909090" />
-                            <Setter Property="Foreground" Value="#33FFFFFF" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ListBox.Resources>
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Margin="0,2,0,2" RenderTransformOrigin="0.5,0.5">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <TextBlock Text="{Binding Layer}" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right"
-                                       Background="DarkGray" Foreground="Black" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
     </Grid>
 </Controls:MetroWindow>

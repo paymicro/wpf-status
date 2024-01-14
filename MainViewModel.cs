@@ -271,7 +271,10 @@ namespace WpfStatus
                         && e.Desc == item.Desc);
                     if (contains != default)
                     {
-                        contains.UpdateVarProps(item);
+                        if (addRewardResults)
+                        {
+                            contains.UpdateVarProps(item);
+                        }
                     }
                     else
                     {
