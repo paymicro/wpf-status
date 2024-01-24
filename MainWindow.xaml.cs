@@ -38,7 +38,6 @@ namespace WpfStatus
                 (s, e) =>
                 {
                     timerProgress += 50;
-                    model.ProgressValue = 100f * timerProgress / period;
                     if (timerProgress > period)
                     {
                         timerProgress = 0;
@@ -50,7 +49,6 @@ namespace WpfStatus
 
         void StopTimer()
         {
-            model.ProgressValue = 0;
             timerProgress = 0;
             timer?.Stop();
         }

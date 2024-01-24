@@ -182,8 +182,7 @@
                 <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" />
                 <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="20,0,16,0" HorizontalAlignment="Left"/>
             </StackPanel>
-            <ProgressBar Value="{Binding ProgressValue, Mode=OneWay}" Margin="0,0,131,0" SmallChange="0.01" VerticalAlignment="Center" Height="20" HorizontalAlignment="Right" Width="150"/>
-            <Button Content="Update All" Margin="0,0,10,0" Height="30" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="116"/>
+            <Button Content="Update All" Margin="842,0,16,0" Height="32" VerticalAlignment="Center" Click="UpdateAll_Click"/>
         </Grid>
     </Grid>
 </Controls:MetroWindow>

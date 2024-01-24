@@ -41,21 +41,6 @@ namespace WpfStatus
             _ = UpdateInfo();
         }
 
-        float _progressValue;
-
-        public float ProgressValue
-        {
-            get { return _progressValue; }
-            set
-            {
-                if (_progressValue != value)
-                {
-                    _progressValue = value;
-                    OnPropertyChanged(nameof(ProgressValue));
-                }
-            }
-        }
-
         public string MainWindowTitle { get; set; }
 
         public bool IsAutoUpdate { get; set; }
