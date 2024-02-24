@@ -1,5 +1,6 @@
 ﻿using MahApps.Metro.Controls;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -40,7 +41,6 @@ namespace WpfStatus
                     timerProgress += 50;
                     if (timerProgress > period)
                     {
-                        timerProgress = 0;
                         UpdateAll_Click(this, new RoutedEventArgs());
                     }
                 },
@@ -70,7 +70,34 @@ namespace WpfStatus
 
         async void UpdateAll_Click(object sender, RoutedEventArgs e)
         {
+            timerProgress = 0;
             await model.UpdateAllNodes();
+        }
+
+        void NodeInfo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is Node node)
+            {
+                if (!string.IsNullOrEmpty(node.Id))
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = $"https://explorer.spacemesh.io/smeshers/0x{node.Id}",
+                            UseShellExecute = true
+                        });
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Unable to open url");
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Unable to update");
+            }
         }
 
         void AutoUpdate_Checked(object sender, RoutedEventArgs e)

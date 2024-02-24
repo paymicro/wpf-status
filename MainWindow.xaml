@@ -46,6 +46,21 @@
                         <Button Margin="1" ToolTip="Full update" Click="Update_Click" IsEnabled="{Binding IsReadyForUpdate}" >
                             <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE117;" FontSize="16" />
                         </Button>
+                        <Button Margin="1" ToolTip="Info in explorer.spacemesh.io" Click="NodeInfo_Click" >
+                            <Button.Content>
+                                <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEDE4;" FontSize="16" />
+                            </Button.Content>
+                            <Button.Style>
+                                <Style BasedOn="{StaticResource MahApps.Styles.Button}" TargetType="Button">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Id}" Value="" >
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <ItemsControl ItemsSource="{Binding CustomActions}" d:ItemsSource="{d:SampleData ItemCount=0}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -182,7 +197,7 @@
                 <CheckBox Content="Auto Update" IsChecked="{Binding IsAutoUpdate}" Checked="AutoUpdate_Checked" Unchecked="AutoUpdate_Unchecked" />
                 <CheckBox Content="Notifications" IsChecked="{Binding IsEnabledNotifications}" Margin="20,0,16,0" HorizontalAlignment="Left"/>
             </StackPanel>
-            <Button Content="Update All" Margin="842,0,16,0" Height="32" VerticalAlignment="Center" Click="UpdateAll_Click"/>
+            <Button Content="Update All" Margin="0,0,16,0" Height="32" VerticalAlignment="Center" Click="UpdateAll_Click" HorizontalAlignment="Right" Width="122"/>
         </Grid>
     </Grid>
 </Controls:MetroWindow>

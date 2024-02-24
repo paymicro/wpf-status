@@ -71,15 +71,21 @@ namespace WpfStatus
             }
         }
 
-        DateTime lastUpdateAll = DateTime.MinValue;
+        DateTime lastDeepUpdate = DateTime.MinValue;
 
         public async Task UpdateAllNodes()
         {
+            var deepUpdate = false;
+            if ((DateTime.UtcNow - lastDeepUpdate).TotalMinutes > 10)
+            {
+                lastDeepUpdate = DateTime.UtcNow;
+                deepUpdate = true;
+            }
+
             foreach (var node in Nodes)
             {
-                if ((DateTime.UtcNow - lastUpdateAll).TotalMinutes > 5)
+                if (deepUpdate)
                 {
-                    lastUpdateAll = DateTime.UtcNow;
                     node.IsUpdateEvents = true;
                     node.IsUpdatePostSetup = true;
                 }

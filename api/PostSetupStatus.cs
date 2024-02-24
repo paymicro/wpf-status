@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace WpfStatus.api
+﻿namespace WpfStatus.api
 {
     public class PostSetupStatus
     {
@@ -10,7 +8,24 @@ namespace WpfStatus.api
 
         public PostSetupStatusOpts Opts { get; set; } = new();
 
-        public string SizeInTib => (Opts.NumUnits * 64 * 0.001f).ToString("0.00 Tib");
+        public string SizeInTib
+        {
+            get
+            {
+                if (Opts.NumUnits == 0)
+                {
+                    return string.Empty;
+                }
+
+                var tib = (Opts.NumUnits * 64 * 0.001f).ToString("0.00 Tib");
+                if (State == "STATE_IN_PROGRESS" && long.TryParse(NumLabelsWritten, out long labelsWriten))
+                {
+                    var persent = Math.Round((labelsWriten / 1024d / 1024 / 1024 * 16) / (Opts.NumUnits * 0.64), 1);
+                    return $"{persent}%   {tib}";
+                }
+                return tib;
+            }
+        }
     }
 
     public class PostSetupStatusOpts

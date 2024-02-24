@@ -25,6 +25,8 @@ namespace WpfStatus
 
         public Status Status { get; private set; } = new();
 
+        public string Id { get; set; } = string.Empty;
+
         public string IsOk
         {
             get
@@ -112,6 +114,11 @@ namespace WpfStatus
                 OnPropertyChanged(nameof(Coinbase));
             }
 
+            if (string.IsNullOrEmpty(Id)) { 
+                Id = await GetSmesherId();
+                OnPropertyChanged(nameof(Id));
+            }
+
             if (!string.IsNullOrEmpty(Status.ConnectedPeers))
             {
                 await DeepUpdate();
@@ -176,6 +183,28 @@ namespace WpfStatus
                 ? string.Empty
                 : Json.Deserialize(output, new { AccountId = new { Address = "" } })?.AccountId?.Address ?? string.Empty;
             return address;
+        }
+
+        async Task<string> GetSmesherId()
+        {
+            var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.SmesherService.SmesherID", maxTime: 3);
+            var publicKey = string.IsNullOrEmpty(output)
+                ? string.Empty
+                : Json.Deserialize(output, new { PublicKey = "" })?.PublicKey;
+            if (string.IsNullOrEmpty(publicKey))
+            {
+                return string.Empty;
+            }
+            try
+            {
+                var bytes = Convert.FromBase64String(publicKey);
+                var hex = Convert.ToHexString(bytes);
+                return hex.ToLower();
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         async Task<List<Event>> GetEventsStream()
