@@ -123,7 +123,7 @@ namespace WpfStatus
 
                 var now = DateTime.UtcNow;
                 var newIndex = false;
-                var eventInFuture = model.TimeEvents.FirstOrDefault(t => t.DateTime > now && t.Desc == node.Name);
+                var eventInFuture = model.TimeEvents.FirstOrDefault(t => t.DateTime > now && t.Name == node.Name);
                 if (eventInFuture != null)
                 {
                     ListTimeEvents.SelectedItem = eventInFuture;
@@ -131,7 +131,7 @@ namespace WpfStatus
                 }
                 else
                 {
-                    var eventInPast = model.TimeEvents.FirstOrDefault(t => t.DateTime < now && t.Desc == node.Name);
+                    var eventInPast = model.TimeEvents.FirstOrDefault(t => t.DateTime < now && t.Name == node.Name);
                     if (eventInPast != null)
                     {
                         ListTimeEvents.SelectedItem = eventInPast;
@@ -214,7 +214,7 @@ namespace WpfStatus
             {
                 for (var i = 0; i < List.Items.Count; i++)
                 {
-                    if (List.Items[i] is Node node && node.Name == timeEvent.Desc)
+                    if (List.Items[i] is Node node && node.Name == timeEvent.Name)
                     {
                         List.SelectedIndex = i;
                         break;

@@ -102,7 +102,10 @@ namespace WpfStatus
             }
         }
 
-        public string Desc { get; set; } = string.Empty;
+        /// <summary>
+        /// The name of the node. If it is not a node, then the name of the event.
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
 
         string _rewardStr = string.Empty;
 
@@ -144,6 +147,16 @@ namespace WpfStatus
         {
             RewardStr = other.RewardStr;
             RewardVisible = other.RewardVisible;
+        }
+
+        internal double GetDays
+        {
+            get => (_dateTime - DateTime.UtcNow).TotalDays;
+        }
+
+        internal bool IsReward
+        {
+            get => EventType == TimeEventTypeEnum.Reward || EventType == TimeEventTypeEnum.CloseReward;
         }
 
         protected virtual void OnPropertyChanged(string propertyName)

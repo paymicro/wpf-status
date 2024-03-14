@@ -99,10 +99,15 @@ namespace WpfStatus
 
             if (IsEnabledNotifications)
             {
-                var invalidNodes = Nodes.Where(n => n.IsOk != "✔");
-                if (invalidNodes.Any())
+                var nearRewards = TimeEvents.Where(t => t.GetDays > 0 && t.GetDays < 0.5 && t.IsReward);
+                var rewardsNames = nearRewards.Select(t => t.Name);
+                var alarmNodes = Nodes.Where(n => n.IsOk != "✔" && rewardsNames.Contains(n.Name));
+                if (alarmNodes.Any())
                 {
-                    var message = string.Join(Environment.NewLine, invalidNodes.Select(n => $"{n.Name} is {n.IsOk} | {n.Status}"));
+                    var message = string.Join(Environment.NewLine, alarmNodes
+                        .Select(n => $"{n.Name}{Environment.NewLine}" +
+                        $"   Next reward {nearRewards.FirstOrDefault(r => r.Name == n.Name)?.InDays}.{Environment.NewLine}" +
+                        $"   {n.IsOk} | {n.Status}"));
                     await SendNotification(message);
                 }
             }
@@ -170,33 +175,36 @@ namespace WpfStatus
 
             if (TimeEvents.Count == 0)
             {
-                TimeEvents.Add(new() { DateTime = eCurrentBegin, Desc = $"Epoch {eCurrentNum}", Level = -1 });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Desc = $"PoST Begin", Level = 1 });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Desc = $"PoST End", Level = 1 });
-                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Desc = $"PoST {eCurrentNum} 108h End", Level = -1 });
-                TimeEvents.Add(new() { DateTime = now, Desc = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin, Name = $"Epoch {eCurrentNum}", Level = -1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset), Name = $"PoST Begin", Level = 1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(official12hOffset2), Name = $"PoST End", Level = 1 });
+                TimeEvents.Add(new() { DateTime = eCurrentBegin.Add(eDurationMs), Name = $"PoST {eCurrentNum} 108h End", Level = -1 });
+                TimeEvents.Add(new() { DateTime = now, Name = "We are here", EventType = Enums.TimeEventTypeEnum.Here });
             }
 
             if (!string.IsNullOrWhiteSpace(GetCoinBase()) &&
                 (now - lastGettingRewards).TotalSeconds > 10)
             {
-                using var client = new HttpClient();
-                var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=200");
-                var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
-                var lastRewardList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
-                var diff = lastRewardList.Count - RewardsList.Count;
-                if (diff > 0 && lastGettingRewards > DateTime.MinValue)
+                try
                 {
-                    var message = $"Reward:";
-                    for (var i = 0; i < diff; i++)
+                    using var client = new HttpClient();
+                    var result = await client.GetStringAsync($"https://mainnet-explorer-api.spacemesh.network/accounts/{appSettings.Coinbase}/rewards?page=1&pagesize=200");
+                    var rewards = Json.Deserialize(result, new { Data = new List<RewardEntity>(), Paginatiaon = new object() })?.Data ?? [];
+                    var lastRewardList = rewards.Where(r => r.Layer > beginEpohLayer).ToList();
+                    var diff = lastRewardList.Count - RewardsList.Count;
+                    if (diff > 0 && lastGettingRewards > DateTime.MinValue)
                     {
-                        message += $"{Environment.NewLine} +{Math.Round(lastRewardList[i].Total / 1000_000_000d, 3)}";
+                        var message = $"Reward:";
+                        for (var i = 0; i < diff; i++)
+                        {
+                            message += $"{Environment.NewLine} +{Math.Round(lastRewardList[i].Total / 1000_000_000d, 3)}";
+                        }
+                        await SendNotification(message);
                     }
-                    await SendNotification(message);
-                }
-                RewardsList = lastRewardList;
-                addRewardResults = true;
-                lastGettingRewards = now;
+                    RewardsList = lastRewardList;
+                    addRewardResults = true;
+                    lastGettingRewards = now;
+                } catch (Exception) { }
             }
 
             foreach (var node in Nodes)
@@ -209,7 +217,7 @@ namespace WpfStatus
                     preparedEvents = eli.Eligibilities.Select(r => new TimeEvent()
                     {
                         Layer = r.Layer,
-                        Desc = node.Name,
+                        Name = node.Name,
                         EventType = Enums.TimeEventTypeEnum.Reward
                     }).ToList();
                 }
@@ -221,7 +229,7 @@ namespace WpfStatus
                         preparedEvents = saved.Eligibilities.Split(',').Select(l => new TimeEvent()
                         {
                             Layer = Convert.ToInt32(l),
-                            Desc = node.Name,
+                            Name = node.Name,
                             EventType = Enums.TimeEventTypeEnum.Reward
                         }).ToList();
                     }
@@ -243,23 +251,17 @@ namespace WpfStatus
                     }
                 }
 
-                var rewardTypes = new List<Enums.TimeEventTypeEnum>()
-                {
-                    Enums.TimeEventTypeEnum.Reward,
-                    Enums.TimeEventTypeEnum.CloseReward
-                };
-
                 foreach (var item in preparedEvents)
                 {
-                    var days = (now - item.DateTime).TotalDays;
-                    if (days > 0 && days < 0.5)
+                    var hours = (now - item.DateTime).TotalHours;
+                    if (hours > 0 && hours < 12)
                     {
                         item.EventType = Enums.TimeEventTypeEnum.CloseReward;
                     }
 
                     var contains = TimeEvents.FirstOrDefault(e => e.Layer == item.Layer
-                        && rewardTypes.Contains(e.EventType)
-                        && e.Desc == item.Desc);
+                        && e.IsReward
+                        && e.Name == item.Name);
                     if (contains != default)
                     {
                         if (addRewardResults)

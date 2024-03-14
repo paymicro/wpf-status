@@ -144,7 +144,7 @@
                                         <TextBlock Text="{Binding RewardStr}" Margin="10,0,0,0" Padding="5,0" HorizontalAlignment="Right"
                                             Background="#4C000000" VerticalAlignment="Center" Visibility="{Binding RewardVisible}"/>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Desc}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" HorizontalAlignment="Center"/>
                                     <TextBlock Text="{Binding InDays}" HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
