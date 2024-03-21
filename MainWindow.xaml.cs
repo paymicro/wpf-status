@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
+using WpfStatus.api;
 
 namespace WpfStatus
 {
@@ -76,15 +77,15 @@ namespace WpfStatus
 
         void NodeInfo_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.DataContext is Node node)
+            if (sender is TextBlock textBlock && textBlock.DataContext is PostState state)
             {
-                if (!string.IsNullOrEmpty(node.Id))
+                if (!string.IsNullOrEmpty(state.Id))
                 {
                     try
                     {
                         Process.Start(new ProcessStartInfo
                         {
-                            FileName = $"https://explorer.spacemesh.io/smeshers/0x{node.Id}",
+                            FileName = $"https://explorer.spacemesh.io/smeshers/0x{state.IdInHex}",
                             UseShellExecute = true
                         });
                     }
@@ -96,7 +97,7 @@ namespace WpfStatus
             }
             else
             {
-                MessageBox.Show("Unable to update");
+                // MessageBox.Show("Unable to update");
             }
         }
 
@@ -118,6 +119,11 @@ namespace WpfStatus
 
         void List_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (timeEventSelected)
+            {
+                return;
+            }
+
             if (e.AddedItems.Count != 0 && e.AddedItems[0] is Node node) {
                 model.SelectedNode = node;
 
@@ -208,6 +214,8 @@ namespace WpfStatus
             dataView.Refresh();
         }
 
+        bool timeEventSelected = false;
+
         void ListTimeEvents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count != 0 && e.AddedItems[0] is TimeEvent timeEvent)
@@ -216,7 +224,9 @@ namespace WpfStatus
                 {
                     if (List.Items[i] is Node node && node.Name == timeEvent.Name)
                     {
+                        timeEventSelected = true;
                         List.SelectedIndex = i;
+                        timeEventSelected = false;
                         break;
                     }
                 }

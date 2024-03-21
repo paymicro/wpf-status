@@ -9,5 +9,7 @@
         public int Port { get; set; } = 0;
 
         public int AdminPort { get; set; } = 0;
+
+        public int PostPort { get; set; } = 0;
     }
 }

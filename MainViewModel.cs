@@ -28,6 +28,7 @@ namespace WpfStatus
                     Port = node.Port,
                     Host = node.Host,
                     AdminPort = node.AdminPort,
+                    PostPort = node.PostPort,
                 });
             }
             MainWindowTitle = appSettings.AppTitle;
@@ -101,7 +102,7 @@ namespace WpfStatus
             {
                 var nearRewards = TimeEvents.Where(t => t.GetDays > 0 && t.GetDays < 0.5 && t.IsReward);
                 var rewardsNames = nearRewards.Select(t => t.Name);
-                var alarmNodes = Nodes.Where(n => n.IsOk != "✔" && rewardsNames.Contains(n.Name));
+                var alarmNodes = Nodes.Where(n => !n.Status.IsSynced && rewardsNames.Contains(n.Name));
                 if (alarmNodes.Any())
                 {
                     var message = string.Join(Environment.NewLine, alarmNodes
@@ -209,14 +210,15 @@ namespace WpfStatus
 
             foreach (var node in Nodes)
             {
-                var eli = node.Events.Select(e => e.Eligibilities).Where(e => e != null).FirstOrDefault();
+                var rewards = node.Rewards;
                 List<TimeEvent> preparedEvents = [];
-                if (eli != null)
+                if (!string.IsNullOrEmpty(rewards))
                 {
-                    UpdateSavedLayers(node.Name, string.Join(',', eli.Eligibilities.Select(r => r.Layer)));
-                    preparedEvents = eli.Eligibilities.Select(r => new TimeEvent()
+                    var layers = rewards.Split(' ');
+                    UpdateSavedLayers(node.Name, string.Join(',', layers));
+                    preparedEvents = layers.Select(l => new TimeEvent()
                     {
-                        Layer = r.Layer,
+                        Layer = Convert.ToInt32(l),
                         Name = node.Name,
                         EventType = Enums.TimeEventTypeEnum.Reward
                     }).ToList();
@@ -224,7 +226,7 @@ namespace WpfStatus
                 else
                 {
                     var saved = nodeLayers.FirstOrDefault(n => n.NodeName == node.Name);
-                    if (saved != default)
+                    if (saved != default && saved.Eligibilities.Length != 0)
                     {
                         preparedEvents = saved.Eligibilities.Split(',').Select(l => new TimeEvent()
                         {

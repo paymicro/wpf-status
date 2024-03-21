@@ -46,11 +46,20 @@
                         <Button Margin="1" ToolTip="Full update" Click="Update_Click" IsEnabled="{Binding IsReadyForUpdate}" >
                             <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE117;" FontSize="16" />
                         </Button>
-                        <Button Margin="1" ToolTip="Info in explorer.spacemesh.io" Click="NodeInfo_Click" >
-                            <Button.Content>
-                                <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEDE4;" FontSize="16" />
-                            </Button.Content>
-                            <Button.Style>
+                        <Controls:DropDownButton ItemsSource="{Binding PostStates}"
+                                                 Margin="1"
+                                                 BorderThickness="0"
+                                                 Padding="0"
+                                                 DisplayMemberPath="Name">
+                            <Controls:DropDownButton.Content>
+                                <Controls:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEDE4;" FontSize="16" Margin="0,0,5,0" />
+                            </Controls:DropDownButton.Content>
+                            <Controls:DropDownButton.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" MouseDown="NodeInfo_Click" />
+                                </DataTemplate>
+                            </Controls:DropDownButton.ItemTemplate>
+                            <Controls:DropDownButton.ButtonStyle>
                                 <Style BasedOn="{StaticResource MahApps.Styles.Button}" TargetType="Button">
                                     <Setter Property="Visibility" Value="Visible"/>
                                     <Style.Triggers>
@@ -59,8 +68,8 @@
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Button.Style>
-                        </Button>
+                            </Controls:DropDownButton.ButtonStyle>
+                        </Controls:DropDownButton>
                         <ItemsControl ItemsSource="{Binding CustomActions}" d:ItemsSource="{d:SampleData ItemCount=0}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -87,11 +96,9 @@
                     <GridViewColumn Header="Ok" Width="40" DisplayMemberBinding="{Binding IsOk}" />
                     <GridViewColumn Header="Layer" Width="60" DisplayMemberBinding="{Binding Status.SyncedLayer}" />
                     <GridViewColumn Header="Top" Width="60" DisplayMemberBinding="{Binding Status.TopLayer}" />
-                    <GridViewColumn Header="Size" Width="70" DisplayMemberBinding="{Binding PostSetupStatus.SizeInTib}" />
-                    <GridViewColumn Header="Dir" Width="50" DisplayMemberBinding="{Binding PostSetupStatus.Opts.DataDir}" />
                     <GridViewColumn Header="Rewards" Width="100" DisplayMemberBinding="{Binding Rewards}" />
                     <GridViewColumn Header="Next" Width="90" DisplayMemberBinding="{Binding TimeToNextReward}" />
-                    <GridViewColumn Header="Action" x:Name="action" Width="80" CellTemplate="{StaticResource comboBoxTemplate}" />
+                    <GridViewColumn Header="Action" x:Name="action" Width="110" CellTemplate="{StaticResource comboBoxTemplate}" />
                     <GridViewColumn Header="Time upd" Width="75" DisplayMemberBinding="{Binding LastUpdatedStr}" />
                 </GridView>
             </ListView.View>

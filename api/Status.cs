@@ -6,7 +6,7 @@ namespace WpfStatus.api
     {
         public string ConnectedPeers { get; set; } = string.Empty;
 
-        public bool? IsSynced { get; set; } = null;
+        public bool IsSynced { get; set; } = false;
 
         public Layer SyncedLayer { get; set; } = new();
 
@@ -14,7 +14,7 @@ namespace WpfStatus.api
 
         public override string ToString()
         {
-            return $"IsSync: {IsSynced==true} | Layer: {SyncedLayer.Number}/{TopLayer.Number}";
+            return $"IsSync: {IsSynced} | Layer: {SyncedLayer.Number}/{TopLayer.Number}";
         }
     }
 }

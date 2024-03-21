@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Text.Json;
 using static WpfStatus.Helper;
+using System.Security.Cryptography.X509Certificates;
 
 namespace WpfStatus
 {
@@ -27,6 +28,10 @@ namespace WpfStatus
 
         public string Id { get; set; } = string.Empty;
 
+        public List<string> Ids { get; set; } = [];
+
+        public List<PostState> PostStates { get; set; } = [];
+
         public string IsOk
         {
             get
@@ -37,7 +42,7 @@ namespace WpfStatus
                 }
                 else
                 {
-                    return (Status.IsSynced == true && Status.TopLayer.Number == Status.SyncedLayer.Number) ? "✔" : "❌";
+                    return (Status.IsSynced && Status.TopLayer.Number == Status.SyncedLayer.Number) ? "✔" : "❌";
                 }
             }
         }
@@ -66,10 +71,11 @@ namespace WpfStatus
         {
             get
             {
-                var eli = Events.Select(e => e.Eligibilities).Where(e => e != null).FirstOrDefault();
-                if (eli != null)
+                var eli = Events.Select(e => e.Eligibilities).Where(e => e != null);
+                var layers = eli.SelectMany(e => e.Eligibilities.Select(el => Convert.ToInt32(el.Layer))).Order();
+                if (layers.Any())
                 {
-                    return string.Join(" ", eli.Eligibilities.Select(e => e.Layer));
+                    return string.Join(" ", layers);
                 }
                 return string.Empty;
             }
@@ -115,7 +121,9 @@ namespace WpfStatus
             }
 
             if (string.IsNullOrEmpty(Id)) { 
-                Id = await GetSmesherId();
+                Ids = await GetSmesherIds();
+                Id = Ids.FirstOrDefault() ?? string.Empty;
+                OnPropertyChanged(nameof(Ids));
                 OnPropertyChanged(nameof(Id));
             }
 
@@ -156,6 +164,12 @@ namespace WpfStatus
 
             PeerInfos = await GetPeerInfoStream();
             OnPropertyChanged(nameof(PeerInfo));
+            PostStates = await GetPostStates();
+            if (PostStates.Count == 0)
+            {
+                PostStates = [new PostState { Id = Convert.ToBase64String(Convert.FromHexString(Id)), Name = Name + " local"  }];
+            }
+            OnPropertyChanged(nameof(PostStates));
         }
 
         async Task<Status> GetStatus()
@@ -185,25 +199,21 @@ namespace WpfStatus
             return address;
         }
 
-        async Task<string> GetSmesherId()
+        async Task<List<string>> GetSmesherIds()
         {
-            var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.SmesherService.SmesherID", maxTime: 3);
-            var publicKey = string.IsNullOrEmpty(output)
-                ? string.Empty
-                : Json.Deserialize(output, new { PublicKey = "" })?.PublicKey;
-            if (string.IsNullOrEmpty(publicKey))
-            {
-                return string.Empty;
-            }
+            var output = await helper.CallGPRC(Host, AdminPort, "spacemesh.v1.SmesherService.SmesherIDs", maxTime: 3);
+            var publicKeys = string.IsNullOrEmpty(output)
+                ? []
+                : Json.Deserialize(output, new { PublicKeys = new List<string>() })?.PublicKeys ?? [];
             try
             {
-                var bytes = Convert.FromBase64String(publicKey);
-                var hex = Convert.ToHexString(bytes);
-                return hex.ToLower();
+                return publicKeys
+                    .Select(key => Convert.ToHexString(Convert.FromBase64String(key)).ToLower())
+                    .ToList();
             }
             catch
             {
-                return string.Empty;
+                return [];
             }
         }
 
@@ -225,6 +235,15 @@ namespace WpfStatus
             return string.IsNullOrEmpty(output)
                 ? []
                 : JsonSerializer.Deserialize<List<PeerInfo>>(output, Json.SerializerOptions) ?? [];
+        }
+
+        async Task<List<PostState>> GetPostStates()
+        {
+            var output = await helper.CallGPRC(Host, PostPort, "spacemesh.v1.PostInfoService.PostStates", maxTime: 1);
+
+            return string.IsNullOrEmpty(output)
+                ? []
+                : Json.Deserialize(output, new { States = new List<PostState>() })?.States ?? [];
         }
     }
 }
